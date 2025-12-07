@@ -60,7 +60,7 @@ export const QuizGame = ({ level, langMode, onClose, onPass }: QuizGameProps) =>
       default:
         return [
           { questionGujarati: "Dog એટલે?", questionHindi: "Dog का मतलब?", answer: "કૂતરો/कुत्ता", options: ["બિલાડી/बिल्ली", "કૂતરો/कुत्ता", "ગાય/गाय", "ભેંસ/भैंस"] },
-          { questionGujarati: "Red રંગ કયો?", questionHindi: "Red रंग कौन सा?", answer: "લાલ/लाल", options: ["લીલો/हरा", "પીળો/पीला", "લાલ/लाल", "કાળો/काला"] },
+          { questionGujarati: "Red રંગ કયો?", questionHindi: "Red रंग कौन सा?", answer: "લાલ/लाल", options: ["લીલો/हरा", "પીળો/पीला", "લાલ/લાल", "કાળો/काला"] },
           { questionGujarati: "Sun એટલે?", questionHindi: "Sun का मतलब?", answer: "સૂર્ય/सूरज", options: ["ચંદ્ર/चांद", "તારો/तारा", "સૂર્ય/सूरज", "આકાશ/आकाश"] },
           { questionGujarati: "Pen નો ઉપયોગ?", questionHindi: "Pen का उपयोग?", answer: "લખવા/लिखना", options: ["ખાવા/खाना", "રમવા/खेलना", "લખવા/लिखना", "સુવા/सोना"] },
           { questionGujarati: "Boy એટલે?", questionHindi: "Boy का मतलब?", answer: "છોકરો/लड़का", options: ["છોકરી/लड़की", "છોકરો/लड़का", "માણસ/आदमी", "સ્ત્રી/औरत"] },
@@ -70,6 +70,12 @@ export const QuizGame = ({ level, langMode, onClose, onPass }: QuizGameProps) =>
 
   const questions = useMemo(() => generateQuestions(), [level]);
   const currentQuestion = questions[questionIndex];
+  
+  // Move useMemo BEFORE any conditional returns to follow React hooks rules
+  const shuffledOptions = useMemo(() => 
+    currentQuestion ? [...currentQuestion.options].sort(() => Math.random() - 0.5) : [],
+    [currentQuestion]
+  );
 
   const handleAnswer = (selected: string) => {
     if (selected === currentQuestion.answer) {
@@ -122,11 +128,6 @@ export const QuizGame = ({ level, langMode, onClose, onPass }: QuizGameProps) =>
       </div>
     );
   }
-
-  const shuffledOptions = useMemo(() => 
-    [...currentQuestion.options].sort(() => Math.random() - 0.5),
-    [currentQuestion]
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/80 backdrop-blur-sm p-4">
