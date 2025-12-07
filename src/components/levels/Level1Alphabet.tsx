@@ -8,6 +8,42 @@ interface Level1AlphabetProps {
   langMode: 'gujarati' | 'hindi';
 }
 
+interface LetterCardProps {
+  item: typeof ALPHABET_DATA[0];
+  langMode: 'gujarati' | 'hindi';
+  activeCard: string | null;
+  onClick: () => void;
+}
+
+const LetterCard = ({ item, langMode, activeCard, onClick }: LetterCardProps) => (
+  <div
+    onClick={onClick}
+    className={cn(
+      'p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all card-hover',
+      'bg-card border-2 border-transparent hover:border-primary/30',
+      'shadow-card',
+      activeCard === item.letter && 'scale-105 border-primary shadow-glow',
+      item.isVowel && 'bg-gradient-to-br from-secondary/20 to-secondary/5'
+    )}
+  >
+    <span className={cn(
+      'text-4xl font-bold',
+      item.isVowel ? 'text-secondary-foreground' : 'text-primary'
+    )}>
+      {item.letter}
+    </span>
+    <span className="text-lg font-semibold text-muted-foreground mt-1">
+      ({langMode === 'gujarati' ? item.gujarati : item.hindi})
+    </span>
+    <span className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-wide">
+      {item.example}
+    </span>
+    <div className="mt-2 opacity-50">
+      <Volume2 className="w-4 h-4" />
+    </div>
+  </div>
+);
+
 export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
 
@@ -22,35 +58,6 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
     );
     setTimeout(() => setActiveCard(null), 500);
   };
-
-  const LetterCard = ({ item }: { item: typeof ALPHABET_DATA[0] }) => (
-    <div
-      onClick={() => handleCardClick(item.letter, item.sound)}
-      className={cn(
-        'p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all card-hover',
-        'bg-card border-2 border-transparent hover:border-primary/30',
-        'shadow-card',
-        activeCard === item.letter && 'scale-105 border-primary shadow-glow',
-        item.isVowel && 'bg-gradient-to-br from-secondary/20 to-secondary/5'
-      )}
-    >
-      <span className={cn(
-        'text-4xl font-bold',
-        item.isVowel ? 'text-secondary-foreground' : 'text-primary'
-      )}>
-        {item.letter}
-      </span>
-      <span className="text-lg font-semibold text-muted-foreground mt-1">
-        ({langMode === 'gujarati' ? item.gujarati : item.hindi})
-      </span>
-      <span className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-wide">
-        {item.example}
-      </span>
-      <div className="mt-2 opacity-50">
-        <Volume2 className="w-4 h-4" />
-      </div>
-    </div>
-  );
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">
@@ -70,7 +77,13 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
         </h3>
         <div className="grid grid-cols-5 gap-3">
           {vowels.map((item) => (
-            <LetterCard key={item.letter} item={item} />
+            <LetterCard 
+              key={item.letter} 
+              item={item} 
+              langMode={langMode}
+              activeCard={activeCard}
+              onClick={() => handleCardClick(item.letter, item.sound)}
+            />
           ))}
         </div>
       </div>
@@ -83,7 +96,13 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
         </h3>
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 pb-6">
           {consonants.map((item) => (
-            <LetterCard key={item.letter} item={item} />
+            <LetterCard 
+              key={item.letter} 
+              item={item} 
+              langMode={langMode}
+              activeCard={activeCard}
+              onClick={() => handleCardClick(item.letter, item.sound)}
+            />
           ))}
         </div>
       </div>
