@@ -10,7 +10,9 @@ import { Level6Grammar } from './levels/Level6Grammar';
 import { Level7Sentences } from './levels/Level7Sentences';
 import { Level8Paragraphs } from './levels/Level8Paragraphs';
 import { QuizGame } from './QuizGame';
-import { Star, LogOut, FileText, Phone } from 'lucide-react';
+import { FullTest } from './FullTest';
+import { GamesMenu } from './games/GamesMenu';
+import { Star, FileText, Phone, Gamepad2, ClipboardList } from 'lucide-react';
 
 interface StudentData {
   name: string;
@@ -28,6 +30,8 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
   const [activeLevel, setActiveLevel] = useState(userData.maxLevel || 1);
   const [langMode, setLangMode] = useState<'gujarati' | 'hindi'>('gujarati');
   const [isTestMode, setIsTestMode] = useState(false);
+  const [isFullTestMode, setIsFullTestMode] = useState(false);
+  const [showGames, setShowGames] = useState(false);
   const [lockedToast, setLockedToast] = useState<string | null>(null);
 
   const addStar = () => {
@@ -39,6 +43,23 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
     onUpdateProgress({ maxLevel: nextLevel });
     setActiveLevel(nextLevel);
     setIsTestMode(false);
+  };
+
+  const handleFullTestComplete = (score: number, total: number) => {
+    onUpdateProgress({ 
+      testScores: { ...((userData as any).testScores || {}), [activeLevel]: { score, total, date: Date.now() } }
+    });
+    setIsFullTestMode(false);
+  };
+
+  const handleGameComplete = (gameName: string, score: number) => {
+    const currentGameScores = (userData as any).gameScores || {};
+    const currentHighScore = currentGameScores[gameName]?.score || 0;
+    if (score > currentHighScore) {
+      onUpdateProgress({
+        gameScores: { ...currentGameScores, [gameName]: { score, date: Date.now() } }
+      });
+    }
   };
 
   const handleLevelClick = (level: number) => {
@@ -158,19 +179,35 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
         </div>
       </div>
 
-      {/* Test Button */}
+      {/* Action Buttons */}
       <div className="max-w-4xl mx-auto w-full px-4 py-3">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-2">
           <div className="text-sm text-muted-foreground">
             Level {activeLevel}: <span className="font-semibold text-foreground">{LEVELS[activeLevel - 1]?.name}</span>
           </div>
-          <button
-            onClick={() => setIsTestMode(true)}
-            className="flex items-center gap-2 px-4 py-2 gradient-secondary text-secondary-foreground rounded-xl font-bold text-sm shadow-sm btn-bounce"
-          >
-            <FileText className="w-4 h-4" />
-            Take Test
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowGames(true)}
+              className="flex items-center gap-1 px-3 py-2 bg-success/20 text-success rounded-xl font-bold text-sm btn-bounce"
+            >
+              <Gamepad2 className="w-4 h-4" />
+              Games
+            </button>
+            <button
+              onClick={() => setIsTestMode(true)}
+              className="flex items-center gap-1 px-3 py-2 gradient-secondary text-secondary-foreground rounded-xl font-bold text-sm shadow-sm btn-bounce"
+            >
+              <FileText className="w-4 h-4" />
+              Quiz
+            </button>
+            <button
+              onClick={() => setIsFullTestMode(true)}
+              className="flex items-center gap-1 px-3 py-2 bg-foreground text-background rounded-xl font-bold text-sm shadow-sm btn-bounce"
+            >
+              <ClipboardList className="w-4 h-4" />
+              100 Test
+            </button>
+          </div>
         </div>
       </div>
 
@@ -188,6 +225,26 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
           langMode={langMode}
           onClose={() => setIsTestMode(false)}
           onPass={handleTestPass}
+        />
+      )}
+
+      {/* Full Test Modal */}
+      {isFullTestMode && (
+        <FullTest
+          level={activeLevel}
+          langMode={langMode}
+          onClose={() => setIsFullTestMode(false)}
+          onComplete={handleFullTestComplete}
+        />
+      )}
+
+      {/* Games Menu */}
+      {showGames && (
+        <GamesMenu
+          level={activeLevel}
+          langMode={langMode}
+          onClose={() => setShowGames(false)}
+          onGameComplete={handleGameComplete}
         />
       )}
 
