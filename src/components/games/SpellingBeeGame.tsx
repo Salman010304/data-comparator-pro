@@ -46,7 +46,7 @@ export const SpellingBeeGame = ({ level, langMode, onClose, onComplete }: Spelli
 
   const speakWord = useCallback(() => {
     if (currentWord) {
-      speak(currentWord, langMode, 1);
+      speak(currentWord, 1);
     }
   }, [currentWord, langMode]);
 
