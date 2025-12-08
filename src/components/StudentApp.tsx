@@ -19,6 +19,8 @@ interface StudentData {
   standard: string;
   stars: number;
   maxLevel: number;
+  testScores?: Record<number, { score: number; total: number; date: number }>;
+  gameScores?: Record<string, { score: number; date: number }>;
 }
 
 interface StudentAppProps {

@@ -70,7 +70,7 @@ export const WordBuilderGame = ({ level, langMode, onClose, onComplete }: WordBu
     
     if (isCorrect) {
       setScore(s => s + 10);
-      speak(currentWord, langMode, 1);
+      speak(currentWord, 1);
     }
 
     setTimeout(() => {
@@ -94,7 +94,7 @@ export const WordBuilderGame = ({ level, langMode, onClose, onComplete }: WordBu
   };
 
   const speakHint = () => {
-    speak(currentWord, langMode, 1);
+    speak(currentWord, 1);
   };
 
   return (
