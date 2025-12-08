@@ -20,6 +20,8 @@ interface StudentData {
   createdAt: number;
   testScores: Record<number, { score: number; total: number; date: number }>;
   gameScores: Record<string, { score: number; date: number }>;
+  wrongAnswers: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
+  lessonsCompleted: number[];
 }
 
 interface TeacherData {
@@ -47,9 +49,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Teacher credentials - In production, this should be stored securely
-const TEACHER_ID = 'nurani_teacher_2024';
-const TEACHER_EMAIL = 'teacher@nurani.edu';
+// Teacher credentials
+const TEACHER_EMAIL = 'salmanmeman010@gmail.com';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +66,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setUserData(userDoc.data() as UserData);
+        } else {
+          // Check if this is the teacher account
+          if (firebaseUser.email === TEACHER_EMAIL) {
+            const teacherData: TeacherData = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: 'Teacher Admin',
+              role: 'teacher',
+              createdAt: Date.now(),
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), teacherData);
+            setUserData(teacherData);
+          }
         }
       } else {
         setUserData(null);
@@ -91,6 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       createdAt: Date.now(),
       testScores: {},
       gameScores: {},
+      wrongAnswers: {},
+      lessonsCompleted: [],
     };
 
     await setDoc(doc(db, 'users', newUser.uid), studentData);
@@ -101,12 +117,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const teacherSignIn = async (teacherId: string, password: string) => {
-    if (teacherId !== TEACHER_ID) {
-      throw new Error('Invalid Teacher ID');
+  const teacherSignIn = async (email: string, password: string) => {
+    if (email !== TEACHER_EMAIL) {
+      throw new Error('Invalid Teacher Email');
     }
     
-    await signInWithEmailAndPassword(auth, TEACHER_EMAIL, password);
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {

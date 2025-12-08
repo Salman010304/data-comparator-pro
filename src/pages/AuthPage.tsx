@@ -61,14 +61,14 @@ const AuthPage = () => {
 
   const handleTeacherLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teacherId || !password) {
-      toast.error('Please enter Teacher ID and password');
+    if (!email || !password) {
+      toast.error('Please enter email and password');
       return;
     }
 
     setIsLoading(true);
     try {
-      await teacherSignIn(teacherId, password);
+      await teacherSignIn(email, password);
       toast.success('Welcome, Teacher! 📚');
       navigate('/teacher');
     } catch (error: any) {
@@ -299,25 +299,29 @@ const AuthPage = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Teacher ID</label>
-        <input
-          type="text"
-          value={teacherId}
-          onChange={(e) => setTeacherId(e.target.value)}
-          placeholder="Enter Teacher ID"
-          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-        />
+        <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
+        <div className="relative">
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="teacher@email.com"
+            className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+          />
+        </div>
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-foreground mb-2">Password</label>
         <div className="relative">
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-4 pr-12 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+            className="w-full pl-12 pr-12 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
           />
           <button
             type="button"
