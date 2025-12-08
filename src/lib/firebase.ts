@@ -2,14 +2,15 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Firebase configuration - Replace with your Firebase project config
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDITHD1oFf7OnxBSW9PUJv6lhnITrsOOmI",
+  authDomain: "nuranitutionclasses.firebaseapp.com",
+  projectId: "nuranitutionclasses",
+  storageBucket: "nuranitutionclasses.firebasestorage.app",
+  messagingSenderId: "318451325558",
+  appId: "1:318451325558:web:0f9dd8024a8458189d9d57",
+  measurementId: "G-Q2PKG8XYCC"
 };
 
 // Initialize Firebase
