@@ -12,23 +12,18 @@ import { Level8Paragraphs } from './levels/Level8Paragraphs';
 import { QuizGame } from './QuizGame';
 import { FullTest } from './FullTest';
 import { GamesMenu } from './games/GamesMenu';
-import { Star, FileText, Phone, Gamepad2, ClipboardList } from 'lucide-react';
+import { Star, FileText, Phone, Gamepad2, ClipboardList, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-interface StudentData {
-  name: string;
-  standard: string;
-  stars: number;
-  maxLevel: number;
-  testScores?: Record<number, { score: number; total: number; date: number }>;
-  gameScores?: Record<string, { score: number; date: number }>;
-}
-
-interface StudentAppProps {
-  userData: StudentData;
-  onUpdateProgress: (data: Partial<StudentData>) => void;
-}
-
-export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
+export const StudentApp = () => {
+  const { userData, updateStudentProgress, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  // Type guard for student data
+  if (!userData || userData.role !== 'student') {
+    return null;
+  }
   const [activeLevel, setActiveLevel] = useState(userData.maxLevel || 1);
   const [langMode, setLangMode] = useState<'gujarati' | 'hindi'>('gujarati');
   const [isTestMode, setIsTestMode] = useState(false);
@@ -36,29 +31,34 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
   const [showGames, setShowGames] = useState(false);
   const [lockedToast, setLockedToast] = useState<string | null>(null);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
+  };
+
   const addStar = () => {
-    onUpdateProgress({ stars: (userData.stars || 0) + 1 });
+    updateStudentProgress({ stars: (userData.stars || 0) + 1 });
   };
 
   const handleTestPass = () => {
     const nextLevel = Math.min(8, activeLevel + 1);
-    onUpdateProgress({ maxLevel: nextLevel });
+    updateStudentProgress({ maxLevel: nextLevel });
     setActiveLevel(nextLevel);
     setIsTestMode(false);
   };
 
   const handleFullTestComplete = (score: number, total: number) => {
-    onUpdateProgress({ 
-      testScores: { ...((userData as any).testScores || {}), [activeLevel]: { score, total, date: Date.now() } }
+    updateStudentProgress({ 
+      testScores: { ...(userData.testScores || {}), [activeLevel]: { score, total, date: Date.now() } }
     });
     setIsFullTestMode(false);
   };
 
   const handleGameComplete = (gameName: string, score: number) => {
-    const currentGameScores = (userData as any).gameScores || {};
+    const currentGameScores = userData.gameScores || {};
     const currentHighScore = currentGameScores[gameName]?.score || 0;
     if (score > currentHighScore) {
-      onUpdateProgress({
+      updateStudentProgress({
         gameScores: { ...currentGameScores, [gameName]: { score, date: Date.now() } }
       });
     }
@@ -115,6 +115,13 @@ export const StudentApp = ({ userData, onUpdateProgress }: StudentAppProps) => {
                 <Star className="w-4 h-4 fill-secondary text-secondary" />
                 {userData.stars}
               </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
