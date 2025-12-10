@@ -23,12 +23,12 @@ export const Level8Paragraphs = ({ langMode, onAddStar }: Level8ParagraphsProps)
         </div>
       </div>
 
-      <div className="flex-1 scroll-area space-y-6">
+      <div className="flex-1 overflow-y-auto space-y-6">
         {PARAGRAPHS.map((para) => (
           <div
             key={para.id}
             className={cn(
-              'rounded-3xl transition-all overflow-hidden',
+              'rounded-3xl transition-all',
               'bg-gradient-to-br from-accent/10 to-accent/5',
               'border-2 border-accent/20',
               activeParagraph === para.id && 'border-accent shadow-glow'
@@ -55,23 +55,13 @@ export const Level8Paragraphs = ({ langMode, onAddStar }: Level8ParagraphsProps)
               </span>
             </div>
 
-            {/* Content */}
-            <div className={cn(
-              'overflow-hidden transition-all duration-300',
-              activeParagraph === para.id ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-            )}>
-              <div className="px-5 pb-5 space-y-4">
+            {/* Content - Scrollable */}
+            {activeParagraph === para.id && (
+              <div className="px-5 pb-5 space-y-4 max-h-[500px] overflow-y-auto">
                 {/* English Text */}
                 <div className="p-4 bg-card rounded-2xl">
                   <p className="text-lg leading-relaxed text-foreground font-medium">
                     {para.text}
-                  </p>
-                </div>
-
-                {/* Translation */}
-                <div className="p-4 bg-muted/50 rounded-2xl">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {langMode === 'gujarati' ? para.gujarati : para.hindi}
                   </p>
                 </div>
 
@@ -87,12 +77,12 @@ export const Level8Paragraphs = ({ langMode, onAddStar }: Level8ParagraphsProps)
                   <MicButton targetText={para.text} onCorrect={onAddStar} size="lg" />
                 </div>
 
-                {/* Read Along */}
+                {/* Read Along - Scrollable */}
                 <div className="pt-4 border-t border-border">
                   <h4 className="text-sm font-semibold text-muted-foreground mb-3">
                     Read Sentence by Sentence:
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
                     {para.text.split('. ').filter(s => s.trim()).map((sentence, i) => (
                       <div 
                         key={i}
@@ -100,13 +90,13 @@ export const Level8Paragraphs = ({ langMode, onAddStar }: Level8ParagraphsProps)
                         className="p-3 bg-card rounded-xl cursor-pointer hover:bg-primary/5 transition-colors flex items-center justify-between"
                       >
                         <span className="text-foreground">{sentence}.</span>
-                        <Volume2 className="w-4 h-4 text-muted-foreground" />
+                        <Volume2 className="w-4 h-4 text-muted-foreground flex-shrink-0 ml-2" />
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         ))}
       </div>

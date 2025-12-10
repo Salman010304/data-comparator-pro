@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SENTENCES } from '@/data/phonicsData';
 import { speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
-import { Volume2, ChevronRight } from 'lucide-react';
+import { Volume2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { MicButton } from '../MicButton';
 
 interface Level7SentencesProps {
@@ -40,7 +40,7 @@ export const Level7Sentences = ({ langMode, onAddStar }: Level7SentencesProps) =
         </div>
       </div>
 
-      <div className="flex-1 scroll-area">
+      <div className="flex-1 overflow-y-auto">
         {!activeCategory ? (
           <div className="space-y-3">
             {categories.map((cat) => {
@@ -73,7 +73,8 @@ export const Level7Sentences = ({ langMode, onAddStar }: Level7SentencesProps) =
               onClick={() => setActiveCategory(null)}
               className="mb-6 flex items-center gap-2 text-sm font-bold px-4 py-2 bg-muted rounded-xl hover:bg-muted/80 transition-colors btn-bounce"
             >
-              ← Back to Categories
+              <ArrowLeft className="w-4 h-4" />
+              Back to Categories
             </button>
 
             <div className="space-y-4">
@@ -87,16 +88,13 @@ export const Level7Sentences = ({ langMode, onAddStar }: Level7SentencesProps) =
                     activeSentence === item.english && 'scale-[1.01] border-primary bg-primary/5'
                   )}
                 >
-                  <p className="text-lg font-semibold text-foreground mb-2">
+                  <p className="text-xl font-bold text-foreground mb-4">
                     {item.english}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {langMode === 'gujarati' ? item.gujarati : item.hindi}
-                  </p>
-                  <div className="flex items-center gap-3 mt-4">
+                  <div className="flex items-center gap-3">
                     <button 
                       onClick={(e) => { e.stopPropagation(); speakEnglish(item.english); }}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 text-sm font-medium"
                     >
                       <Volume2 className="w-4 h-4" />
                       Listen

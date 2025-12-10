@@ -39,7 +39,7 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
         </div>
       </div>
 
-      <div className="flex-1 scroll-area">
+      <div className="flex-1 overflow-y-auto">
         {!activeRoot ? (
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3">
             {BARAKHADI_ROOTS.map((root, i) => (
@@ -50,14 +50,16 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
                   'p-4 rounded-2xl font-bold transition-all card-hover btn-bounce',
                   'bg-gradient-to-br from-secondary/30 to-secondary/10',
                   'border-2 border-secondary/20 hover:border-secondary/50',
-                  'flex flex-col items-center justify-center h-20'
+                  'flex flex-col items-center justify-center h-24'
                 )}
               >
-                <span className="text-2xl text-foreground">
-                  {langMode === 'gujarati' ? root.gujarati : root.hindi}
+                {/* English letter big on top */}
+                <span className="text-2xl font-black text-primary">
+                  {root.english}
                 </span>
-                <span className="text-xs font-bold text-primary mt-1">
-                  ({root.english})
+                {/* Gujarati/Hindi letter small below */}
+                <span className="text-sm text-foreground mt-1">
+                  {langMode === 'gujarati' ? root.gujarati : root.hindi}
                 </span>
               </button>
             ))}
@@ -73,11 +75,11 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
             </button>
 
             <div className="text-center mb-6">
-              <span className="text-5xl font-bold text-primary">
-                {langMode === 'gujarati' ? activeRoot.gujarati : activeRoot.hindi}
+              <span className="text-5xl font-black text-primary">
+                {activeRoot.english}
               </span>
-              <span className="text-xl text-muted-foreground ml-2">
-                ({activeRoot.english})
+              <span className="text-2xl text-muted-foreground ml-3">
+                ({langMode === 'gujarati' ? activeRoot.gujarati : activeRoot.hindi})
               </span>
             </div>
 
@@ -94,15 +96,17 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
                     className={cn(
                       'p-4 rounded-2xl text-center cursor-pointer transition-all card-hover',
                       'bg-card border-2 border-primary/20 hover:border-primary/50',
-                      'flex flex-col items-center justify-center h-24',
+                      'flex flex-col items-center justify-center h-28',
                       activeCell === matra.suffix && 'scale-105 border-primary shadow-glow'
                     )}
                   >
-                    <span className="text-3xl font-bold text-foreground">
-                      {combined}
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-2">
+                    {/* English spelling big */}
+                    <span className="text-2xl font-black text-primary">
                       {activeRoot.english}{matra.english}
+                    </span>
+                    {/* Combined letter small */}
+                    <span className="text-lg font-medium text-foreground mt-2">
+                      {combined}
                     </span>
                     <Volume2 className="w-3 h-3 text-muted-foreground/50 mt-1" />
                   </div>
