@@ -98,119 +98,257 @@ const TeacherDashboard = () => {
     completedAll: students.filter(s => s.maxLevel === 8).length,
   };
 
-  // Generate CSV report for a student
+  // Generate PDF report for a student
   const generateStudentReport = (student: StudentData) => {
-    const rows = [
-      ['Student Report - Nurani Tuition Classes'],
-      [''],
-      ['Name', student.name],
-      ['Email', student.email],
-      ['Standard', student.standard],
-      ['Stars Earned', student.stars.toString()],
-      ['Current Level', `${student.maxLevel}/8`],
-      ['Joined Date', new Date(student.createdAt).toLocaleDateString()],
-      [''],
-      ['Test Scores'],
-      ['Level', 'Score', 'Total', 'Percentage', 'Date'],
-    ];
-
-    Object.entries(student.testScores || {}).forEach(([level, data]) => {
-      rows.push([
-        `Level ${level}`,
-        data.score.toString(),
-        data.total.toString(),
-        `${((data.score / data.total) * 100).toFixed(1)}%`,
-        new Date(data.date).toLocaleDateString()
-      ]);
-    });
-
-    rows.push(['']);
-    rows.push(['Game Scores']);
-    rows.push(['Game', 'High Score', 'Date']);
-
-    Object.entries(student.gameScores || {}).forEach(([game, data]) => {
-      rows.push([
-        game.replace(/-/g, ' '),
-        data.score.toString(),
-        new Date(data.date).toLocaleDateString()
-      ]);
-    });
-
-    if (student.lessonsCompleted && student.lessonsCompleted.length > 0) {
-      rows.push(['']);
-      rows.push(['Lessons Completed']);
-      rows.push([student.lessonsCompleted.map(l => `Level ${l}`).join(', ')]);
-    }
-
-    if (student.wrongAnswers && Object.keys(student.wrongAnswers).length > 0) {
-      rows.push(['']);
-      rows.push(['Mistakes Record']);
-      rows.push(['Level', 'Question', 'Wrong Answer', 'Correct Answer', 'Date']);
-      
-      Object.entries(student.wrongAnswers).forEach(([level, mistakes]) => {
-        mistakes.forEach(m => {
-          rows.push([
-            `Level ${level}`,
-            m.question,
-            m.wrongAnswer,
-            m.correctAnswer,
-            new Date(m.date).toLocaleDateString()
-          ]);
-        });
+    import('jspdf').then(({ jsPDF }) => {
+      import('jspdf-autotable').then((autoTableModule) => {
+        const doc = new jsPDF();
+        const autoTable = autoTableModule.default;
+        
+        // Header with gradient-like effect
+        doc.setFillColor(79, 70, 229); // Primary purple
+        doc.rect(0, 0, 210, 45, 'F');
+        
+        // Title
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nurani Tuition Classes', 105, 18, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Student Progress Report', 105, 28, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.text('Master Salman and Tahura Teacher', 105, 38, { align: 'center' });
+        
+        // Student Info Box
+        doc.setFillColor(245, 245, 250);
+        doc.roundedRect(14, 52, 182, 35, 3, 3, 'F');
+        
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(student.name, 20, 65);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Email: ${student.email}`, 20, 73);
+        doc.text(`Standard: ${student.standard}`, 20, 80);
+        
+        // Stats boxes
+        doc.setFillColor(254, 243, 199); // Yellow for stars
+        doc.roundedRect(120, 55, 35, 25, 2, 2, 'F');
+        doc.setTextColor(180, 130, 0);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`⭐ ${student.stars}`, 137, 68, { align: 'center' });
+        doc.setFontSize(8);
+        doc.text('Stars', 137, 76, { align: 'center' });
+        
+        doc.setFillColor(209, 250, 229); // Green for level
+        doc.roundedRect(158, 55, 35, 25, 2, 2, 'F');
+        doc.setTextColor(22, 101, 52);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${student.maxLevel}/8`, 175, 68, { align: 'center' });
+        doc.setFontSize(8);
+        doc.text('Level', 175, 76, { align: 'center' });
+        
+        let yPos = 95;
+        
+        // Test Scores Table
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('📝 Test Scores', 14, yPos);
+        yPos += 5;
+        
+        const testData = Object.entries(student.testScores || {}).map(([level, data]) => [
+          `Level ${level}`,
+          data.score.toString(),
+          data.total.toString(),
+          `${((data.score / data.total) * 100).toFixed(1)}%`,
+          new Date(data.date).toLocaleDateString()
+        ]);
+        
+        if (testData.length > 0) {
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Level', 'Score', 'Total', 'Percentage', 'Date']],
+            body: testData,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            margin: { left: 14, right: 14 },
+          });
+          yPos = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          doc.text('No tests taken yet', 14, yPos + 8);
+          yPos += 15;
+        }
+        
+        // Game Scores Table
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('🎮 Game Scores', 14, yPos);
+        yPos += 5;
+        
+        const gameData = Object.entries(student.gameScores || {}).map(([game, data]) => [
+          game.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          data.score.toString(),
+          new Date(data.date).toLocaleDateString()
+        ]);
+        
+        if (gameData.length > 0) {
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Game', 'High Score', 'Date']],
+            body: gameData,
+            theme: 'striped',
+            headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+            margin: { left: 14, right: 14 },
+          });
+          yPos = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          doc.text('No games played yet', 14, yPos + 8);
+          yPos += 15;
+        }
+        
+        // Mistakes Record
+        if (student.wrongAnswers && Object.keys(student.wrongAnswers).length > 0) {
+          if (yPos > 230) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('❌ Mistakes Record', 14, yPos);
+          yPos += 5;
+          
+          const mistakesData: string[][] = [];
+          Object.entries(student.wrongAnswers).forEach(([level, mistakes]) => {
+            mistakes.forEach(m => {
+              mistakesData.push([
+                `Level ${level}`,
+                m.question.substring(0, 30) + (m.question.length > 30 ? '...' : ''),
+                m.wrongAnswer,
+                m.correctAnswer,
+              ]);
+            });
+          });
+          
+          if (mistakesData.length > 0) {
+            autoTable(doc, {
+              startY: yPos,
+              head: [['Level', 'Question', 'Wrong', 'Correct']],
+              body: mistakesData,
+              theme: 'striped',
+              headStyles: { fillColor: [239, 68, 68], textColor: 255 },
+              margin: { left: 14, right: 14 },
+              columnStyles: { 1: { cellWidth: 60 } },
+            });
+          }
+        }
+        
+        // Footer
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+        }
+        
+        doc.save(`${student.name.replace(/\s+/g, '_')}_report.pdf`);
+        soundManager.playSuccess();
+        toast.success('PDF Report downloaded!');
       });
-    }
-
-    const csvContent = rows.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${student.name.replace(/\s+/g, '_')}_report.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    soundManager.playSuccess();
-    toast.success('Report downloaded!');
+    });
   };
 
-  // Generate all students report
+  // Generate all students PDF report
   const generateAllStudentsReport = () => {
-    const rows = [
-      ['All Students Report - Nurani Tuition Classes'],
-      ['Generated on', new Date().toLocaleDateString()],
-      [''],
-      ['Name', 'Email', 'Standard', 'Stars', 'Level', 'Tests Taken', 'Avg Score', 'Joined Date'],
-    ];
-
-    students.forEach(student => {
-      const testsTaken = Object.keys(student.testScores || {}).length;
-      const avgScore = testsTaken > 0
-        ? (Object.values(student.testScores).reduce((sum, t) => sum + (t.score / t.total) * 100, 0) / testsTaken).toFixed(1)
-        : 'N/A';
-
-      rows.push([
-        student.name,
-        student.email,
-        student.standard,
-        student.stars.toString(),
-        `${student.maxLevel}/8`,
-        testsTaken.toString(),
-        avgScore === 'N/A' ? avgScore : `${avgScore}%`,
-        new Date(student.createdAt).toLocaleDateString()
-      ]);
+    import('jspdf').then(({ jsPDF }) => {
+      import('jspdf-autotable').then((autoTableModule) => {
+        const doc = new jsPDF('landscape');
+        const autoTable = autoTableModule.default;
+        
+        // Header
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, 297, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nurani Tuition Classes', 148, 18, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text('All Students Progress Report', 148, 28, { align: 'center' });
+        doc.text('Master Salman and Tahura Teacher', 148, 36, { align: 'center' });
+        
+        // Stats Summary
+        doc.setFillColor(245, 245, 250);
+        doc.roundedRect(14, 48, 269, 20, 3, 3, 'F');
+        
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total Students: ${stats.totalStudents}`, 30, 60);
+        doc.text(`Total Stars: ${stats.totalStars}`, 100, 60);
+        doc.text(`Avg Level: ${stats.avgLevel}`, 170, 60);
+        doc.text(`Completed All: ${stats.completedAll}`, 240, 60);
+        
+        // Students Table
+        const tableData = students.map(student => {
+          const testsTaken = Object.keys(student.testScores || {}).length;
+          const avgScore = testsTaken > 0
+            ? (Object.values(student.testScores).reduce((sum, t) => sum + (t.score / t.total) * 100, 0) / testsTaken).toFixed(1) + '%'
+            : 'N/A';
+          
+          return [
+            student.name,
+            student.email,
+            student.standard,
+            student.stars.toString(),
+            `${student.maxLevel}/8`,
+            testsTaken.toString(),
+            avgScore,
+            new Date(student.createdAt).toLocaleDateString()
+          ];
+        });
+        
+        autoTable(doc, {
+          startY: 75,
+          head: [['Name', 'Email', 'Standard', 'Stars', 'Level', 'Tests', 'Avg Score', 'Joined']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 245, 250] },
+          margin: { left: 14, right: 14 },
+          styles: { fontSize: 9 },
+        });
+        
+        // Footer
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`, 148, 200, { align: 'center' });
+        }
+        
+        doc.save('all_students_report.pdf');
+        soundManager.playSuccess();
+        toast.success('All Students PDF Report downloaded!');
+      });
     });
-
-    const csvContent = rows.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'all_students_report.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    soundManager.playSuccess();
-    toast.success('All students report downloaded!');
   };
 
   // Handle CSV file upload for level data
