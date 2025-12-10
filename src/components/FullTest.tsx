@@ -317,40 +317,47 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
         }
         break;
 
-      case 7: // Sentences
-        Object.values(SENTENCES).flat().forEach(sentence => {
-          const translation = langMode === 'gujarati' ? sentence.gujarati : sentence.hindi;
-
-          qs.push({
-            id: id++,
-            question: `Translate: "${sentence.english}"`,
-            answer: translation,
-            options: generateOptions(
-              translation,
-              Object.values(SENTENCES).flat().map(s => 
-                langMode === 'gujarati' ? s.gujarati : s.hindi
-              )
-            ),
-            type: 'translate'
-          });
-
-          // Word identification in sentence
+      case 7: // Sentences - Reading comprehension
+        const allSentences7 = Object.values(SENTENCES).flat();
+        allSentences7.forEach(sentence => {
           const words = sentence.english.split(' ');
-          if (words.length >= 3) {
+          
+          // First word identification
+          if (words.length >= 2) {
             qs.push({
               id: id++,
-              question: `First word of "${sentence.english}"?`,
+              question: `First word of: "${sentence.english}"?`,
               answer: words[0],
-              options: generateOptions(words[0], words),
+              options: generateOptions(words[0], allSentences7.flatMap(s => s.english.split(' ').slice(0, 1))),
               type: 'first-word'
             });
           }
+
+          // Last word identification
+          if (words.length >= 2) {
+            const lastWord = words[words.length - 1].replace(/[.!?]/, '');
+            qs.push({
+              id: id++,
+              question: `Last word of: "${sentence.english}"?`,
+              answer: lastWord,
+              options: generateOptions(lastWord, allSentences7.flatMap(s => s.english.split(' ').slice(-1).map(w => w.replace(/[.!?]/, '')))),
+              type: 'last-word'
+            });
+          }
+
+          // Word count
+          qs.push({
+            id: id++,
+            question: `How many words in: "${sentence.english}"?`,
+            answer: words.length.toString(),
+            options: [words.length.toString(), (words.length + 1).toString(), (words.length - 1).toString(), (words.length + 2).toString()].filter((v, i, a) => a.indexOf(v) === i && parseInt(v) > 0).sort(() => Math.random() - 0.5),
+            type: 'word-count'
+          });
         });
 
         // Fill remaining
-        const allSentences = Object.values(SENTENCES).flat();
         while (qs.length < 100) {
-          const sentence = allSentences[qs.length % allSentences.length];
+          const sentence = allSentences7[qs.length % allSentences7.length];
           qs.push({
             id: id++,
             question: `"${sentence.english}" is correct English?`,
@@ -362,32 +369,48 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
         break;
 
       case 8: // Paragraphs - reading comprehension
-        // Similar structure with paragraph questions
-        Object.values(SENTENCES).flat().forEach(sentence => {
-          qs.push({
-            id: id++,
-            question: `Meaning: "${sentence.english}"`,
-            answer: langMode === 'gujarati' ? sentence.gujarati : sentence.hindi,
-            options: generateOptions(
-              langMode === 'gujarati' ? sentence.gujarati : sentence.hindi,
-              Object.values(SENTENCES).flat().map(s => 
-                langMode === 'gujarati' ? s.gujarati : s.hindi
-              )
-            ),
-            type: 'comprehension'
-          });
+        const allSentences8 = Object.values(SENTENCES).flat();
+        allSentences8.forEach(sentence => {
+          const words = sentence.english.split(' ');
+          
+          // Sentence completion
+          if (words.length >= 3) {
+            const partial = words.slice(0, -1).join(' ') + ' ___';
+            const lastWord = words[words.length - 1].replace(/[.!?]/, '');
+            qs.push({
+              id: id++,
+              question: `Complete: "${partial}"`,
+              answer: lastWord,
+              options: generateOptions(lastWord, allSentences8.flatMap(s => s.english.split(' ').slice(-1).map(w => w.replace(/[.!?]/, '')))),
+              type: 'completion'
+            });
+          }
+
+          // Word order
+          if (words.length >= 2) {
+            qs.push({
+              id: id++,
+              question: `Read aloud: "${sentence.english}" - Can you read this?`,
+              answer: 'Yes',
+              options: ['Yes', 'Need Practice'],
+              type: 'reading-check'
+            });
+          }
         });
 
         // Fill remaining
         while (qs.length < 100) {
-          const sentence = allSentences[qs.length % allSentences.length];
-          qs.push({
-            id: id++,
-            question: `Read: "${sentence.english}" - Understood?`,
-            answer: 'Yes',
-            options: ['Yes', 'Need Practice'],
-            type: 'self-check'
-          });
+          const sentence = allSentences8[qs.length % allSentences8.length];
+          const words = sentence.english.split(' ');
+          if (words.length >= 2) {
+            qs.push({
+              id: id++,
+              question: `Which word comes after "${words[0]}" in: "${sentence.english}"?`,
+              answer: words[1],
+              options: generateOptions(words[1], words),
+              type: 'word-order'
+            });
+          }
         }
         break;
 
