@@ -48,9 +48,20 @@ export const StudentApp = () => {
   };
 
   const handleFullTestComplete = (score: number, total: number) => {
-    updateStudentProgress({ 
+    const percentage = (score / total) * 100;
+    const passed = percentage >= 70; // 70% required to pass
+    
+    const updates: any = { 
       testScores: { ...(userData.testScores || {}), [activeLevel]: { score, total, date: Date.now() } }
-    });
+    };
+    
+    // Upgrade level if passed and not at max level
+    if (passed && activeLevel === userData.maxLevel && activeLevel < 8) {
+      updates.maxLevel = activeLevel + 1;
+      setActiveLevel(activeLevel + 1);
+    }
+    
+    updateStudentProgress(updates);
     setIsFullTestMode(false);
   };
 
