@@ -41,9 +41,7 @@ export const StudentApp = () => {
   };
 
   const handleTestPass = () => {
-    const nextLevel = Math.min(8, activeLevel + 1);
-    updateStudentProgress({ maxLevel: nextLevel });
-    setActiveLevel(nextLevel);
+    // Quiz no longer unlocks levels - only for practice
     setIsTestMode(false);
   };
 
