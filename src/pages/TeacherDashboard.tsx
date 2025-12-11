@@ -30,6 +30,7 @@ interface StudentData {
   wrongAnswers?: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted?: number[];
   parentPhone?: string;
+  screenTime?: number; // Total screen time in minutes
 }
 
 type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management';
@@ -335,7 +336,7 @@ const TeacherDashboard = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                     <div className="text-sm">
                       <p className="text-muted-foreground">Joined</p>
                       <p className="font-medium text-foreground">
@@ -353,6 +354,12 @@ const TeacherDashboard = () => {
                     <div className="text-sm">
                       <p className="text-muted-foreground">Tests Taken</p>
                       <p className="font-medium text-foreground">{Object.keys(student.testScores || {}).length}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-muted-foreground">Screen Time</p>
+                      <p className="font-medium text-foreground">
+                        {Math.floor((student.screenTime || 0) / 60)}h {(student.screenTime || 0) % 60}m
+                      </p>
                     </div>
                   </div>
 
@@ -405,7 +412,7 @@ const TeacherDashboard = () => {
 
                   {/* Game Scores */}
                   {Object.keys(student.gameScores || {}).length > 0 && (
-                    <div>
+                    <div className="mb-4">
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                         <Trophy className="w-4 h-4" />
                         Game High Scores
@@ -415,6 +422,35 @@ const TeacherDashboard = () => {
                           <div key={game} className="bg-muted/50 rounded-lg p-3 text-center">
                             <p className="text-xs text-muted-foreground capitalize">{game.replace(/-/g, ' ')}</p>
                             <p className="font-bold text-foreground">{data.score}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Wrong Answers from Tests */}
+                  {Object.keys(student.wrongAnswers || {}).length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-destructive" />
+                        Mistakes in Tests (Review Required)
+                      </h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {Object.entries(student.wrongAnswers).map(([level, mistakes]) => (
+                          <div key={level} className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+                            <p className="text-sm font-bold text-destructive mb-2">Level {level} - {mistakes.length} mistakes</p>
+                            <div className="space-y-1">
+                              {mistakes.slice(0, 5).map((m, idx) => (
+                                <div key={idx} className="text-xs bg-background/50 rounded p-2">
+                                  <p className="text-muted-foreground">{m.question}</p>
+                                  <p className="text-destructive">Wrong: {m.wrongAnswer}</p>
+                                  <p className="text-success">Correct: {m.correctAnswer}</p>
+                                </div>
+                              ))}
+                              {mistakes.length > 5 && (
+                                <p className="text-xs text-muted-foreground">+{mistakes.length - 5} more mistakes</p>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>

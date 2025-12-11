@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { LEVELS } from '@/data/phonicsData';
 import { Level1Alphabet } from './levels/Level1Alphabet';
@@ -12,9 +12,11 @@ import { Level8Paragraphs } from './levels/Level8Paragraphs';
 import { QuizGame } from './QuizGame';
 import { FullTest } from './FullTest';
 import { GamesMenu } from './games/GamesMenu';
-import { Star, FileText, Phone, Gamepad2, ClipboardList, LogOut } from 'lucide-react';
+import { LevelCelebration } from './LevelCelebration';
+import { Star, FileText, Phone, Gamepad2, ClipboardList, LogOut, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { soundManager } from '@/utils/sounds';
 
 export const StudentApp = () => {
   const { userData, updateStudentProgress, logout } = useAuth();
@@ -30,6 +32,20 @@ export const StudentApp = () => {
   const [isFullTestMode, setIsFullTestMode] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [lockedToast, setLockedToast] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [newUnlockedLevel, setNewUnlockedLevel] = useState(1);
+  const [sessionStart] = useState(Date.now());
+
+  // Track screen time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const sessionMinutes = Math.floor((Date.now() - sessionStart) / 60000);
+      const totalScreenTime = (userData.screenTime || 0) + 1; // Add 1 minute
+      updateStudentProgress({ screenTime: totalScreenTime });
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [sessionStart]);
 
   const handleLogout = async () => {
     await logout();
@@ -38,39 +54,61 @@ export const StudentApp = () => {
 
   const addStar = () => {
     updateStudentProgress({ stars: (userData.stars || 0) + 1 });
+    soundManager.playStar();
   };
 
   const handleTestPass = () => {
-    // Quiz no longer unlocks levels - only for practice
+    // Quiz gives stars for practice
+    addStar();
     setIsTestMode(false);
   };
 
-  const handleFullTestComplete = (score: number, total: number) => {
+  const handleFullTestComplete = (score: number, total: number, wrongAnswers: any[]) => {
     const percentage = (score / total) * 100;
     const passed = percentage >= 70; // 70% required to pass
     
     const updates: any = { 
-      testScores: { ...(userData.testScores || {}), [activeLevel]: { score, total, date: Date.now() } }
+      testScores: { ...(userData.testScores || {}), [activeLevel]: { score, total, date: Date.now() } },
+      wrongAnswers: { ...(userData.wrongAnswers || {}), [activeLevel]: wrongAnswers },
+      stars: (userData.stars || 0) + Math.floor(score / 10) // Add stars based on score
     };
     
     // Upgrade level if passed and not at max level
     if (passed && activeLevel === userData.maxLevel && activeLevel < 8) {
       updates.maxLevel = activeLevel + 1;
-      setActiveLevel(activeLevel + 1);
+      setNewUnlockedLevel(activeLevel + 1);
+      setShowCelebration(true);
     }
     
     updateStudentProgress(updates);
     setIsFullTestMode(false);
   };
 
+  const handleCelebrationClose = () => {
+    setShowCelebration(false);
+    setActiveLevel(newUnlockedLevel);
+  };
+
   const handleGameComplete = (gameName: string, score: number) => {
     const currentGameScores = userData.gameScores || {};
     const currentHighScore = currentGameScores[gameName]?.score || 0;
+    
+    // Always add stars based on game score
+    const starsEarned = Math.floor(score / 20); // 1 star per 20 points
+    
+    const updates: any = {
+      stars: (userData.stars || 0) + starsEarned
+    };
+    
     if (score > currentHighScore) {
-      updateStudentProgress({
-        gameScores: { ...currentGameScores, [gameName]: { score, date: Date.now() } }
-      });
+      updates.gameScores = { ...currentGameScores, [gameName]: { score, date: Date.now() } };
     }
+    
+    if (starsEarned > 0) {
+      soundManager.playStar();
+    }
+    
+    updateStudentProgress(updates);
   };
 
   const handleLevelClick = (level: number) => {
@@ -119,7 +157,11 @@ export const StudentApp = () => {
                 Standard: {userData.standard}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                <Clock className="w-3 h-3" />
+                {Math.floor((userData.screenTime || 0) / 60)}h {(userData.screenTime || 0) % 60}m
+              </div>
               <div className="flex items-center gap-1.5 bg-secondary/20 text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-bold">
                 <Star className="w-4 h-4 fill-secondary text-secondary" />
                 {userData.stars}
@@ -263,6 +305,14 @@ export const StudentApp = () => {
           langMode={langMode}
           onClose={() => setShowGames(false)}
           onGameComplete={handleGameComplete}
+        />
+      )}
+
+      {/* Level Celebration */}
+      {showCelebration && (
+        <LevelCelebration 
+          newLevel={newUnlockedLevel} 
+          onClose={handleCelebrationClose} 
         />
       )}
 

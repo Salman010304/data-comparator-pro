@@ -14,7 +14,7 @@ interface FullTestProps {
   level: number;
   langMode: 'gujarati' | 'hindi';
   onClose: () => void;
-  onComplete: (score: number, total: number) => void;
+  onComplete: (score: number, total: number, wrongAnswers: WrongAnswer[]) => void;
 }
 
 interface Question {
@@ -23,6 +23,13 @@ interface Question {
   answer: string;
   options: string[];
   type: string;
+}
+
+interface WrongAnswer {
+  question: string;
+  wrongAnswer: string;
+  correctAnswer: string;
+  date: number;
 }
 
 export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps) => {
@@ -41,6 +48,23 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
       return [correct, ...wrong].sort(() => Math.random() - 0.5);
     };
 
+    // Language-specific question text
+    const qText = langMode === 'hindi' ? {
+      letterSound: (letter: string) => `"${letter}" की ध्वनि क्या है?`,
+      soundLetter: (sound: string) => `"${sound}" किस अक्षर की ध्वनि है?`,
+      startsWord: (letter: string) => `"${letter}" से शुरू होने वाला शब्द?`,
+      whatIs: (letter: string) => `"${letter}" क्या है?`,
+      vowel: 'स्वर (Vowel)',
+      consonant: 'व्यंजन (Consonant)',
+    } : {
+      letterSound: (letter: string) => `"${letter}" નો અવાજ શું છે?`,
+      soundLetter: (sound: string) => `"${sound}" એ કયા અક્ષરનો અવાજ છે?`,
+      startsWord: (letter: string) => `"${letter}" થી શરૂ થતો શબ્દ?`,
+      whatIs: (letter: string) => `"${letter}" શું છે?`,
+      vowel: 'સ્વર (Vowel)',
+      consonant: 'વ્યંજન (Consonant)',
+    };
+
     switch (level) {
       case 1: // Alphabet - 100 questions
         // Letter to sound (26)
@@ -49,7 +73,7 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
           const pool = ALPHABET_DATA.map(a => langMode === 'gujarati' ? a.gujarati : a.hindi);
           qs.push({
             id: id++,
-            question: `"${item.letter}" નો અવાજ શું છે?`,
+            question: qText.letterSound(item.letter),
             answer: meaning,
             options: generateOptions(meaning, pool),
             type: 'letter-sound'
@@ -62,7 +86,7 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
           const pool = ALPHABET_DATA.map(a => a.letter);
           qs.push({
             id: id++,
-            question: `"${meaning}" એ કયા અક્ષરનો અવાજ છે?`,
+            question: qText.soundLetter(meaning),
             answer: item.letter,
             options: generateOptions(item.letter, pool),
             type: 'sound-letter'
@@ -74,7 +98,7 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
           const pool = ALPHABET_DATA.map(a => a.example);
           qs.push({
             id: id++,
-            question: `"${item.letter}" થી શરૂ થતો શબ્દ?`,
+            question: qText.startsWord(item.letter),
             answer: item.example,
             options: generateOptions(item.example, pool),
             type: 'example'
@@ -85,9 +109,9 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
         ALPHABET_DATA.slice(0, 22).forEach(item => {
           qs.push({
             id: id++,
-            question: `"${item.letter}" શું છે?`,
-            answer: item.isVowel ? 'Vowel (સ્વર)' : 'Consonant (વ્યંજન)',
-            options: ['Vowel (સ્વર)', 'Consonant (વ્યંજન)'],
+            question: qText.whatIs(item.letter),
+            answer: item.isVowel ? qText.vowel : qText.consonant,
+            options: [qText.vowel, qText.consonant],
             type: 'vowel-consonant'
           });
         });
@@ -455,7 +479,18 @@ export const FullTest = ({ level, langMode, onClose, onComplete }: FullTestProps
     const correctCount = questions.filter(
       (q, idx) => answers[idx] === q.answer
     ).length;
-    onComplete(correctCount, 100);
+    
+    // Collect wrong answers
+    const wrongAnswersList: WrongAnswer[] = questions
+      .filter((q, idx) => answers[idx] && answers[idx] !== q.answer)
+      .map((q, idx) => ({
+        question: q.question,
+        wrongAnswer: answers[questions.indexOf(q)] || '',
+        correctAnswer: q.answer,
+        date: Date.now()
+      }));
+    
+    onComplete(correctCount, 100, wrongAnswersList);
   };
 
   const correctCount = questions.filter(
