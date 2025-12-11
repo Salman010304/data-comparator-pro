@@ -20,20 +20,37 @@ export const SpellingBeeGame = ({ level, langMode, onClose, onComplete }: Spelli
   const [gameComplete, setGameComplete] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
-  // Generate words based on level
+  // Generate words based on level - level-appropriate only
   const words = useMemo(() => {
     const wordList: string[] = [];
     
-    if (level <= 4) {
-      // CVC words
+    if (level === 1) {
+      // Level 1: Simple letter sounds - use alphabet examples
+      import('@/data/phonicsData').then(({ ALPHABET_DATA }) => {
+        ALPHABET_DATA.forEach(item => wordList.push(item.example));
+      });
+      return ['apple', 'ball', 'cat', 'dog', 'egg', 'fan', 'gun', 'hat', 'ink', 'jug'];
+    } else if (level === 2) {
+      // Level 2: Barakhadi - consonant sounds
+      return ['ka', 'kha', 'ga', 'gha', 'cha', 'ja', 'ta', 'da', 'na', 'pa'];
+    } else if (level === 3) {
+      // Level 3: Two-letter blending words
+      return ['am', 'an', 'at', 'in', 'it', 'on', 'up', 'us', 'if', 'or'];
+    } else if (level === 4) {
+      // Level 4: CVC words only
       Object.values(CVC_WORD_FAMILIES).forEach(family => {
-        wordList.push(...family.words);
+        wordList.push(...family.words.slice(0, 2));
       });
+    } else if (level === 5) {
+      // Level 5: Sight words level 1
+      SIGHT_WORDS.level1.forEach(item => wordList.push(item.word));
+    } else if (level === 6) {
+      // Level 6: Sight words level 2 + Grammar
+      SIGHT_WORDS.level2.slice(0, 10).forEach(item => wordList.push(item.word));
     } else {
-      // Sight words
-      Object.values(SIGHT_WORDS).flat().forEach(item => {
-        wordList.push(item.word);
-      });
+      // Level 7-8: Mix of sight words level 3
+      SIGHT_WORDS.level3.forEach(item => wordList.push(item.word));
+      SIGHT_WORDS.level2.slice(10).forEach(item => wordList.push(item.word));
     }
 
     // Shuffle and take 10

@@ -19,13 +19,35 @@ export const WordBuilderGame = ({ level, langMode, onClose, onComplete }: WordBu
   const [gameComplete, setGameComplete] = useState(false);
   const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
 
-  // Generate words based on level
+  // Generate words based on level - level-appropriate only
   const words = useMemo(() => {
     const wordList: string[] = [];
     
-    Object.values(CVC_WORD_FAMILIES).forEach(family => {
-      wordList.push(...family.words.slice(0, 2));
-    });
+    if (level === 1) {
+      // Level 1: Simple 3-letter words
+      return ['cat', 'dog', 'bat', 'hat', 'sun', 'pen', 'cup', 'bag', 'fan', 'map'];
+    } else if (level === 2) {
+      // Level 2: Simple words
+      return ['man', 'can', 'van', 'pan', 'rat', 'mat', 'sat', 'red', 'bed', 'hen'];
+    } else if (level === 3) {
+      // Level 3: Two-letter words
+      return ['am', 'an', 'at', 'in', 'it', 'on', 'up', 'us', 'if', 'or'];
+    } else if (level === 4) {
+      // Level 4: CVC word families
+      const families = Object.values(CVC_WORD_FAMILIES);
+      families.slice(0, 5).forEach(family => {
+        wordList.push(...family.words.slice(0, 2));
+      });
+    } else if (level === 5) {
+      // Level 5: Sight words from level 1
+      return ['the', 'is', 'are', 'you', 'we', 'he', 'she', 'it', 'in', 'on'];
+    } else if (level === 6) {
+      // Level 6: Sight words from level 2
+      return ['they', 'them', 'his', 'her', 'has', 'have', 'was', 'were', 'for', 'from'];
+    } else {
+      // Level 7-8: More complex sight words
+      return ['what', 'where', 'who', 'when', 'why', 'come', 'some', 'one', 'two', 'all'];
+    }
 
     return wordList.sort(() => Math.random() - 0.5).slice(0, 10);
   }, [level]);
