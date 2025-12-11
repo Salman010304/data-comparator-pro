@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ALPHABET_DATA } from '@/data/phonicsData';
-import { speak } from '@/utils/speech';
+import { speak, speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2 } from 'lucide-react';
 
@@ -52,11 +52,17 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
 
   const handleCardClick = (letter: string, sound: string) => {
     setActiveCard(letter);
-    speak(langMode === 'gujarati' 
-      ? ALPHABET_DATA.find(a => a.letter === letter)?.gujarati || sound 
-      : ALPHABET_DATA.find(a => a.letter === letter)?.hindi || sound
-    );
-    setTimeout(() => setActiveCard(null), 500);
+    const item = ALPHABET_DATA.find(a => a.letter === letter);
+    const translation = langMode === 'gujarati' ? item?.gujarati : item?.hindi;
+    
+    // Speak the English letter first, then the translation
+    // Example: "A" then "અ"
+    speakEnglish(letter);
+    setTimeout(() => {
+      speak(translation || sound);
+    }, 600);
+    
+    setTimeout(() => setActiveCard(null), 1200);
   };
 
   return (

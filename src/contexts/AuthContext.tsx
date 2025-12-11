@@ -22,6 +22,8 @@ interface StudentData {
   gameScores: Record<string, { score: number; date: number }>;
   wrongAnswers: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted: number[];
+  screenTime: number; // Total screen time in minutes
+  parentPhone?: string;
 }
 
 interface TeacherData {
@@ -107,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameScores: {},
       wrongAnswers: {},
       lessonsCompleted: [],
+      screenTime: 0,
     };
 
     await setDoc(doc(db, 'users', newUser.uid), studentData);
