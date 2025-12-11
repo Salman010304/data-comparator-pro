@@ -4,11 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { LEVELS } from '@/data/phonicsData';
 import { soundManager } from '@/utils/sounds';
+import { generateStudentReport, generateAllStudentsReport, generateCertificate } from '@/utils/pdfGenerator';
+import { ProgressChart } from '@/components/teacher/ProgressChart';
+import { HomeworkAttendance } from '@/components/teacher/HomeworkAttendance';
 import { 
   Users, LogOut, Star, Trophy, BookOpen, BarChart3, 
   Search, Filter, ChevronDown, ChevronUp, Award, Download,
   Upload, FileSpreadsheet, AlertCircle, Check, X, Volume2, VolumeX,
-  Eye, Trash2, Edit3, RefreshCw
+  Eye, Trash2, Edit3, RefreshCw, MessageCircle, GraduationCap,
+  CalendarCheck, PieChart
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,9 +29,10 @@ interface StudentData {
   gameScores: Record<string, { score: number; date: number }>;
   wrongAnswers?: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted?: number[];
+  parentPhone?: string;
 }
 
-type TabType = 'students' | 'data-management' | 'reports' | 'mistakes';
+type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management';
 
 const TeacherDashboard = () => {
   const { userData, logout, getAllStudents, updateStudentData } = useAuth();
@@ -41,6 +46,7 @@ const TeacherDashboard = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
+  const [chartStudent, setChartStudent] = useState<StudentData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -48,7 +54,6 @@ const TeacherDashboard = () => {
       navigate('/auth');
       return;
     }
-
     loadStudents();
   }, [userData, navigate]);
 
@@ -98,257 +103,34 @@ const TeacherDashboard = () => {
     completedAll: students.filter(s => s.maxLevel === 8).length,
   };
 
-  // Generate PDF report for a student
-  const generateStudentReport = (student: StudentData) => {
-    import('jspdf').then(({ jsPDF }) => {
-      import('jspdf-autotable').then((autoTableModule) => {
-        const doc = new jsPDF();
-        const autoTable = autoTableModule.default;
-        
-        // Header with gradient-like effect
-        doc.setFillColor(79, 70, 229); // Primary purple
-        doc.rect(0, 0, 210, 45, 'F');
-        
-        // Title
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Nurani Tuition Classes', 105, 18, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Student Progress Report', 105, 28, { align: 'center' });
-        
-        doc.setFontSize(10);
-        doc.text('Master Salman and Tahura Teacher', 105, 38, { align: 'center' });
-        
-        // Student Info Box
-        doc.setFillColor(245, 245, 250);
-        doc.roundedRect(14, 52, 182, 35, 3, 3, 'F');
-        
-        doc.setTextColor(60, 60, 60);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(student.name, 20, 65);
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Email: ${student.email}`, 20, 73);
-        doc.text(`Standard: ${student.standard}`, 20, 80);
-        
-        // Stats boxes
-        doc.setFillColor(254, 243, 199); // Yellow for stars
-        doc.roundedRect(120, 55, 35, 25, 2, 2, 'F');
-        doc.setTextColor(180, 130, 0);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`⭐ ${student.stars}`, 137, 68, { align: 'center' });
-        doc.setFontSize(8);
-        doc.text('Stars', 137, 76, { align: 'center' });
-        
-        doc.setFillColor(209, 250, 229); // Green for level
-        doc.roundedRect(158, 55, 35, 25, 2, 2, 'F');
-        doc.setTextColor(22, 101, 52);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${student.maxLevel}/8`, 175, 68, { align: 'center' });
-        doc.setFontSize(8);
-        doc.text('Level', 175, 76, { align: 'center' });
-        
-        let yPos = 95;
-        
-        // Test Scores Table
-        doc.setTextColor(60, 60, 60);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('📝 Test Scores', 14, yPos);
-        yPos += 5;
-        
-        const testData = Object.entries(student.testScores || {}).map(([level, data]) => [
-          `Level ${level}`,
-          data.score.toString(),
-          data.total.toString(),
-          `${((data.score / data.total) * 100).toFixed(1)}%`,
-          new Date(data.date).toLocaleDateString()
-        ]);
-        
-        if (testData.length > 0) {
-          autoTable(doc, {
-            startY: yPos,
-            head: [['Level', 'Score', 'Total', 'Percentage', 'Date']],
-            body: testData,
-            theme: 'striped',
-            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
-            margin: { left: 14, right: 14 },
-          });
-          yPos = (doc as any).lastAutoTable.finalY + 10;
-        } else {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'italic');
-          doc.text('No tests taken yet', 14, yPos + 8);
-          yPos += 15;
-        }
-        
-        // Game Scores Table
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('🎮 Game Scores', 14, yPos);
-        yPos += 5;
-        
-        const gameData = Object.entries(student.gameScores || {}).map(([game, data]) => [
-          game.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          data.score.toString(),
-          new Date(data.date).toLocaleDateString()
-        ]);
-        
-        if (gameData.length > 0) {
-          autoTable(doc, {
-            startY: yPos,
-            head: [['Game', 'High Score', 'Date']],
-            body: gameData,
-            theme: 'striped',
-            headStyles: { fillColor: [34, 197, 94], textColor: 255 },
-            margin: { left: 14, right: 14 },
-          });
-          yPos = (doc as any).lastAutoTable.finalY + 10;
-        } else {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'italic');
-          doc.text('No games played yet', 14, yPos + 8);
-          yPos += 15;
-        }
-        
-        // Mistakes Record
-        if (student.wrongAnswers && Object.keys(student.wrongAnswers).length > 0) {
-          if (yPos > 230) {
-            doc.addPage();
-            yPos = 20;
-          }
-          
-          doc.setFontSize(14);
-          doc.setFont('helvetica', 'bold');
-          doc.text('❌ Mistakes Record', 14, yPos);
-          yPos += 5;
-          
-          const mistakesData: string[][] = [];
-          Object.entries(student.wrongAnswers).forEach(([level, mistakes]) => {
-            mistakes.forEach(m => {
-              mistakesData.push([
-                `Level ${level}`,
-                m.question.substring(0, 30) + (m.question.length > 30 ? '...' : ''),
-                m.wrongAnswer,
-                m.correctAnswer,
-              ]);
-            });
-          });
-          
-          if (mistakesData.length > 0) {
-            autoTable(doc, {
-              startY: yPos,
-              head: [['Level', 'Question', 'Wrong', 'Correct']],
-              body: mistakesData,
-              theme: 'striped',
-              headStyles: { fillColor: [239, 68, 68], textColor: 255 },
-              margin: { left: 14, right: 14 },
-              columnStyles: { 1: { cellWidth: 60 } },
-            });
-          }
-        }
-        
-        // Footer
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text(`Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
-        }
-        
-        doc.save(`${student.name.replace(/\s+/g, '_')}_report.pdf`);
-        soundManager.playSuccess();
-        toast.success('PDF Report downloaded!');
-      });
-    });
+  // Handle WhatsApp notification
+  const sendWhatsAppMessage = (student: StudentData, message: string) => {
+    // Use parent phone or generate notification
+    const phone = student.parentPhone || '919408097177'; // Default school number
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+    soundManager.playSuccess();
+    toast.success(`WhatsApp opened for ${student.name}`);
   };
 
-  // Generate all students PDF report
-  const generateAllStudentsReport = () => {
-    import('jspdf').then(({ jsPDF }) => {
-      import('jspdf-autotable').then((autoTableModule) => {
-        const doc = new jsPDF('landscape');
-        const autoTable = autoTableModule.default;
-        
-        // Header
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, 297, 40, 'F');
-        
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Nurani Tuition Classes', 148, 18, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('All Students Progress Report', 148, 28, { align: 'center' });
-        doc.text('Master Salman and Tahura Teacher', 148, 36, { align: 'center' });
-        
-        // Stats Summary
-        doc.setFillColor(245, 245, 250);
-        doc.roundedRect(14, 48, 269, 20, 3, 3, 'F');
-        
-        doc.setTextColor(60, 60, 60);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Total Students: ${stats.totalStudents}`, 30, 60);
-        doc.text(`Total Stars: ${stats.totalStars}`, 100, 60);
-        doc.text(`Avg Level: ${stats.avgLevel}`, 170, 60);
-        doc.text(`Completed All: ${stats.completedAll}`, 240, 60);
-        
-        // Students Table
-        const tableData = students.map(student => {
-          const testsTaken = Object.keys(student.testScores || {}).length;
-          const avgScore = testsTaken > 0
-            ? (Object.values(student.testScores).reduce((sum, t) => sum + (t.score / t.total) * 100, 0) / testsTaken).toFixed(1) + '%'
-            : 'N/A';
-          
-          return [
-            student.name,
-            student.email,
-            student.standard,
-            student.stars.toString(),
-            `${student.maxLevel}/8`,
-            testsTaken.toString(),
-            avgScore,
-            new Date(student.createdAt).toLocaleDateString()
-          ];
-        });
-        
-        autoTable(doc, {
-          startY: 75,
-          head: [['Name', 'Email', 'Standard', 'Stars', 'Level', 'Tests', 'Avg Score', 'Joined']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [245, 245, 250] },
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 9 },
-        });
-        
-        // Footer
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text(`Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`, 148, 200, { align: 'center' });
-        }
-        
-        doc.save('all_students_report.pdf');
-        soundManager.playSuccess();
-        toast.success('All Students PDF Report downloaded!');
-      });
-    });
+  // Send progress notification
+  const sendProgressNotification = (student: StudentData) => {
+    const testCount = Object.keys(student.testScores || {}).length;
+    const avgScore = testCount > 0
+      ? (Object.values(student.testScores).reduce((sum, t) => sum + (t.score / t.total) * 100, 0) / testCount).toFixed(1)
+      : 'N/A';
+    
+    const message = `🏫 *${student.name}'s Progress Report*\n\n📚 *Nurani Tuition Classes*\n${new Date().toLocaleDateString('en-IN', { dateStyle: 'full' })}\n\n⭐ Stars Earned: ${student.stars}\n📊 Current Level: ${student.maxLevel}/8\n📝 Tests Taken: ${testCount}\n📈 Average Score: ${avgScore}%\n\n🎯 Keep up the good work!\n\n_${student.name} is making great progress in their phonics learning journey._\n\n📞 For queries: 9408097177\n👨‍🏫 Master Salman and Tahura Teacher`;
+    
+    sendWhatsAppMessage(student, message);
+  };
+
+  // Generate certificate
+  const handleGenerateCertificate = (student: StudentData) => {
+    generateCertificate(student, student.maxLevel);
+    soundManager.playSuccess();
+    toast.success(`Certificate generated for ${student.name}!`);
   };
 
   // Handle CSV file upload for level data
@@ -361,12 +143,8 @@ const TeacherDashboard = () => {
       try {
         const text = e.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
-        
-        // Parse CSV and show preview
         toast.success(`File uploaded! ${lines.length - 1} records found for Level ${selectedLevel}`);
         soundManager.playSuccess();
-        
-        // In a real app, you would save this data to Firebase
         console.log('Parsed data for level', selectedLevel, lines);
       } catch (error) {
         toast.error('Failed to parse file');
@@ -505,18 +283,39 @@ const TeacherDashboard = () => {
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     <button
-                      onClick={() => generateStudentReport(student)}
+                      onClick={() => {
+                        generateStudentReport(student);
+                        soundManager.playSuccess();
+                        toast.success('PDF Report downloaded!');
+                      }}
                       className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
                     >
                       <Download className="w-4 h-4" />
-                      Download Report
+                      Report
                     </button>
                     <button
-                      onClick={() => setSelectedStudent(student)}
-                      className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+                      onClick={() => handleGenerateCertificate(student)}
+                      className="flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-lg hover:bg-success/20 transition-colors"
                     >
-                      <Eye className="w-4 h-4" />
-                      View Mistakes
+                      <GraduationCap className="w-4 h-4" />
+                      Certificate
+                    </button>
+                    <button
+                      onClick={() => sendProgressNotification(student)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-lg hover:bg-green-500/20 transition-colors"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </button>
+                    <button
+                      onClick={() => {
+                        setChartStudent(student);
+                        setActiveTab('charts');
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors"
+                    >
+                      <PieChart className="w-4 h-4" />
+                      Charts
                     </button>
                     <select
                       value={student.maxLevel}
@@ -532,7 +331,7 @@ const TeacherDashboard = () => {
                       className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
                     >
                       <RefreshCw className="w-4 h-4" />
-                      Reset Progress
+                      Reset
                     </button>
                   </div>
 
@@ -630,6 +429,154 @@ const TeacherDashboard = () => {
     </>
   );
 
+  const renderHomeworkTab = () => (
+    <HomeworkAttendance 
+      students={students} 
+      onSendWhatsApp={sendWhatsAppMessage}
+    />
+  );
+
+  const renderChartsTab = () => (
+    <div className="space-y-6">
+      <div className="bg-card rounded-2xl p-6 shadow-card">
+        <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <PieChart className="w-5 h-5" />
+          Progress Analytics
+        </h3>
+        
+        {/* Student selector for individual charts */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
+            Select student for individual analysis:
+          </label>
+          <select
+            value={chartStudent?.uid || ''}
+            onChange={(e) => {
+              const student = students.find(s => s.uid === e.target.value);
+              setChartStudent(student || null);
+            }}
+            className="px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors w-full md:w-auto"
+          >
+            <option value="">Class Overview Only</option>
+            {students.map(s => (
+              <option key={s.uid} value={s.uid}>{s.name} ({s.standard})</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <ProgressChart students={students} selectedStudent={chartStudent} />
+    </div>
+  );
+
+  const renderReportsTab = () => (
+    <div className="space-y-6">
+      <div className="bg-card rounded-2xl p-6 shadow-card">
+        <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <Download className="w-5 h-5" />
+          Download Reports & Certificates
+        </h3>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button
+            onClick={() => {
+              generateAllStudentsReport(students, stats);
+              soundManager.playSuccess();
+              toast.success('All Students PDF Report downloaded!');
+            }}
+            className="p-6 bg-muted/50 rounded-xl text-left hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h4 className="font-bold text-foreground">All Students Report</h4>
+                <p className="text-sm text-muted-foreground">Complete class overview</p>
+              </div>
+            </div>
+          </button>
+
+          <div className="p-6 bg-muted/50 rounded-xl">
+            <h4 className="font-bold text-foreground mb-3 flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Individual Report
+            </h4>
+            <select
+              onChange={(e) => {
+                const student = students.find(s => s.uid === e.target.value);
+                if (student) {
+                  generateStudentReport(student);
+                  soundManager.playSuccess();
+                  toast.success('PDF Report downloaded!');
+                }
+              }}
+              defaultValue=""
+              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground"
+            >
+              <option value="" disabled>Select a student...</option>
+              {students.map(s => (
+                <option key={s.uid} value={s.uid}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="p-6 bg-muted/50 rounded-xl">
+            <h4 className="font-bold text-foreground mb-3 flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              Generate Certificate
+            </h4>
+            <select
+              onChange={(e) => {
+                const student = students.find(s => s.uid === e.target.value);
+                if (student) {
+                  handleGenerateCertificate(student);
+                }
+              }}
+              defaultValue=""
+              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground"
+            >
+              <option value="" disabled>Select a student...</option>
+              {students.map(s => (
+                <option key={s.uid} value={s.uid}>{s.name} (Level {s.maxLevel})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl p-6 shadow-card">
+        <h3 className="text-xl font-bold text-foreground mb-4">Report Contents</h3>
+        <ul className="space-y-2 text-muted-foreground">
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            Student personal information & photo avatar
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            Stars earned and current level with grades
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            All test scores with percentages & grade letters
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            Game high scores with dates
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            Areas for improvement (mistakes record)
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-success" />
+            Beautiful formatted PDF with school branding
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+
   const renderDataManagementTab = () => (
     <div className="space-y-6">
       <div className="bg-card rounded-2xl p-6 shadow-card">
@@ -698,81 +645,6 @@ const TeacherDashboard = () => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-
-  const renderReportsTab = () => (
-    <div className="space-y-6">
-      <div className="bg-card rounded-2xl p-6 shadow-card">
-        <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <Download className="w-5 h-5" />
-          Download Reports
-        </h3>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <button
-            onClick={generateAllStudentsReport}
-            className="p-6 bg-muted/50 rounded-xl text-left hover:bg-muted transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h4 className="font-bold text-foreground">All Students Report</h4>
-                <p className="text-sm text-muted-foreground">Complete overview of all students</p>
-              </div>
-            </div>
-          </button>
-
-          <div className="p-6 bg-muted/50 rounded-xl">
-            <h4 className="font-bold text-foreground mb-3">Individual Student Report</h4>
-            <select
-              onChange={(e) => {
-                const student = students.find(s => s.uid === e.target.value);
-                if (student) generateStudentReport(student);
-              }}
-              defaultValue=""
-              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground"
-            >
-              <option value="" disabled>Select a student...</option>
-              {students.map(s => (
-                <option key={s.uid} value={s.uid}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card rounded-2xl p-6 shadow-card">
-        <h3 className="text-xl font-bold text-foreground mb-4">Report Contents</h3>
-        <ul className="space-y-2 text-muted-foreground">
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Student personal information
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Stars earned and current level
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            All test scores with percentages
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Game high scores
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Completed lessons list
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Wrong answers and mistakes record
-          </li>
-        </ul>
       </div>
     </div>
   );
@@ -920,12 +792,14 @@ const TeacherDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
           {[
             { id: 'students', label: 'Students', icon: Users },
-            { id: 'data-management', label: 'Data Management', icon: FileSpreadsheet },
+            { id: 'homework', label: 'Homework & Attendance', icon: CalendarCheck },
+            { id: 'charts', label: 'Charts', icon: PieChart },
             { id: 'reports', label: 'Reports', icon: Download },
             { id: 'mistakes', label: 'Mistakes', icon: AlertCircle },
+            { id: 'data-management', label: 'Data', icon: FileSpreadsheet },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -948,8 +822,10 @@ const TeacherDashboard = () => {
 
         {/* Tab Content */}
         {activeTab === 'students' && renderStudentsTab()}
-        {activeTab === 'data-management' && renderDataManagementTab()}
+        {activeTab === 'homework' && renderHomeworkTab()}
+        {activeTab === 'charts' && renderChartsTab()}
         {activeTab === 'reports' && renderReportsTab()}
+        {activeTab === 'data-management' && renderDataManagementTab()}
         {activeTab === 'mistakes' && renderMistakesTab()}
       </div>
     </div>
