@@ -13,7 +13,8 @@ import { QuizGame } from './QuizGame';
 import { FullTest } from './FullTest';
 import { GamesMenu } from './games/GamesMenu';
 import { LevelCelebration } from './LevelCelebration';
-import { Star, FileText, Phone, Gamepad2, ClipboardList, LogOut, Clock } from 'lucide-react';
+import { StudentMistakesView } from './StudentMistakesView';
+import { Star, FileText, Phone, Gamepad2, ClipboardList, LogOut, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { soundManager } from '@/utils/sounds';
@@ -35,6 +36,7 @@ export const StudentApp = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [newUnlockedLevel, setNewUnlockedLevel] = useState(1);
   const [sessionStart] = useState(Date.now());
+  const [showMistakes, setShowMistakes] = useState(false);
 
   // Track screen time
   useEffect(() => {
@@ -176,8 +178,19 @@ export const StudentApp = () => {
             </div>
           </div>
 
-          {/* Language Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Language Toggle & Mistakes Button */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* View Mistakes Button */}
+            {Object.keys(userData.wrongAnswers || {}).length > 0 && (
+              <button
+                onClick={() => setShowMistakes(true)}
+                className="flex items-center gap-1.5 bg-destructive/10 text-destructive px-3 py-1.5 rounded-xl text-sm font-semibold btn-bounce"
+              >
+                <AlertCircle className="w-4 h-4" />
+                My Mistakes
+              </button>
+            )}
+            
             <div className="flex bg-muted p-1 rounded-xl">
               <button
                 onClick={() => setLangMode('gujarati')}
@@ -313,6 +326,14 @@ export const StudentApp = () => {
         <LevelCelebration 
           newLevel={newUnlockedLevel} 
           onClose={handleCelebrationClose} 
+        />
+      )}
+
+      {/* Student Mistakes View */}
+      {showMistakes && (
+        <StudentMistakesView
+          wrongAnswers={userData.wrongAnswers || {}}
+          onClose={() => setShowMistakes(false)}
         />
       )}
 

@@ -1,44 +1,21 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { STANDARDS } from '@/data/phonicsData';
 import { cn } from '@/lib/utils';
-import { BookOpen, GraduationCap, UserCog, Eye, EyeOff, ArrowLeft, Sparkles, Mail, Lock, User } from 'lucide-react';
+import { BookOpen, GraduationCap, UserCog, Eye, EyeOff, ArrowLeft, Sparkles, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-type AuthMode = 'choice' | 'student-login' | 'student-signup' | 'teacher-login';
+type AuthMode = 'choice' | 'student-login' | 'teacher-login';
 
 const AuthPage = () => {
   const [mode, setMode] = useState<AuthMode>('choice');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [standard, setStandard] = useState(STANDARDS[0]);
-  const [teacherId, setTeacherId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signUp, signIn, teacherSignIn } = useAuth();
+  const { signIn, teacherSignIn } = useAuth();
   const navigate = useNavigate();
-
-  const handleStudentSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password || !name) {
-      toast.error('Please fill all fields');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await signUp(email, password, name, standard);
-      toast.success('Welcome to Nurani Classes! 🎉');
-      navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +85,10 @@ const AuthPage = () => {
         <UserCog className="w-6 h-6" />
         Teacher Login
       </button>
+
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        New student? Ask your teacher to create your account.
+      </p>
     </div>
   );
 
@@ -127,6 +108,7 @@ const AuthPage = () => {
           <GraduationCap className="w-8 h-8 text-primary-foreground" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">Student Login</h2>
+        <p className="text-muted-foreground text-sm">Enter your credentials</p>
       </div>
 
       <div>
@@ -175,107 +157,9 @@ const AuthPage = () => {
         {isLoading ? 'Logging in...' : 'Login'}
       </button>
 
-      <p className="text-center text-muted-foreground">
-        New student?{' '}
-        <button
-          type="button"
-          onClick={() => setMode('student-signup')}
-          className="text-primary font-semibold hover:underline"
-        >
-          Sign Up
-        </button>
+      <p className="text-center text-sm text-muted-foreground">
+        Don't have an account? Ask your teacher to create one for you.
       </p>
-    </form>
-  );
-
-  const renderStudentSignUp = () => (
-    <form onSubmit={handleStudentSignUp} className="space-y-4">
-      <button
-        type="button"
-        onClick={() => setMode('student-login')}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Login
-      </button>
-
-      <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
-        <p className="text-muted-foreground text-sm">Join Nurani Classes today!</p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Your Name</label>
-        <div className="relative">
-          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your name"
-            className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
-        <div className="relative">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Password</label>
-        <div className="relative">
-          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Min 6 characters"
-            className="w-full pl-12 pr-12 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Standard</label>
-        <select
-          value={standard}
-          onChange={(e) => setStandard(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-        >
-          {STANDARDS.map((std) => (
-            <option key={std} value={std}>{std}</option>
-          ))}
-        </select>
-      </div>
-
-      <button
-        type="submit"
-        disabled={isLoading}
-        className={cn(
-          'w-full py-4 rounded-xl font-bold text-lg transition-all btn-bounce gradient-primary text-primary-foreground shadow-button mt-4',
-          isLoading && 'opacity-50 cursor-not-allowed'
-        )}
-      >
-        {isLoading ? 'Creating Account...' : 'Sign Up'}
-      </button>
     </form>
   );
 
@@ -351,7 +235,6 @@ const AuthPage = () => {
       <div className="w-full max-w-md bg-card rounded-3xl shadow-card p-8">
         {mode === 'choice' && renderChoice()}
         {mode === 'student-login' && renderStudentLogin()}
-        {mode === 'student-signup' && renderStudentSignUp()}
         {mode === 'teacher-login' && renderTeacherLogin()}
       </div>
     </div>
