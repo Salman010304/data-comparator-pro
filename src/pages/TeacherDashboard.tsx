@@ -33,10 +33,10 @@ interface StudentData {
   screenTime?: number; // Total screen time in minutes
 }
 
-type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management';
+type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management' | 'add-student';
 
 const TeacherDashboard = () => {
-  const { userData, logout, getAllStudents, updateStudentData } = useAuth();
+  const { userData, logout, getAllStudents, updateStudentData, deleteStudent, signUp } = useAuth();
   const navigate = useNavigate();
   const [students, setStudents] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,14 @@ const TeacherDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [chartStudent, setChartStudent] = useState<StudentData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // New student form state
+  const [newStudentName, setNewStudentName] = useState('');
+  const [newStudentEmail, setNewStudentEmail] = useState('');
+  const [newStudentPassword, setNewStudentPassword] = useState('');
+  const [newStudentStandard, setNewStudentStandard] = useState('1st');
+  const [newStudentParentPhone, setNewStudentParentPhone] = useState('');
+  const [creatingStudent, setCreatingStudent] = useState(false);
 
   useEffect(() => {
     if (!userData || userData.role !== 'teacher') {
@@ -173,6 +181,21 @@ const TeacherDashboard = () => {
       toast.success(`${student.name}'s progress has been reset`);
     } catch (error) {
       toast.error('Failed to reset student');
+      soundManager.playError();
+    }
+  };
+
+  // Delete student
+  const handleDeleteStudent = async (student: StudentData) => {
+    if (!confirm(`Are you sure you want to DELETE ${student.name}? This action cannot be undone!`)) return;
+    
+    try {
+      await deleteStudent(student.uid);
+      await loadStudents();
+      soundManager.playSuccess();
+      toast.success(`${student.name} has been removed`);
+    } catch (error) {
+      toast.error('Failed to delete student');
       soundManager.playError();
     }
   };
@@ -329,10 +352,17 @@ const TeacherDashboard = () => {
                     </select>
                     <button
                       onClick={() => handleResetStudent(student)}
-                      className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-warning/10 text-warning rounded-lg hover:bg-warning/20 transition-colors"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Reset
+                    </button>
+                    <button
+                      onClick={() => handleDeleteStudent(student)}
+                      className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
                     </button>
                   </div>
 

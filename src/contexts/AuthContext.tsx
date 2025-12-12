@@ -6,7 +6,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, updateDoc, query, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, updateDoc, query, where, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 interface StudentData {
@@ -47,6 +47,7 @@ interface AuthContextType {
   updateStudentProgress: (data: Partial<StudentData>) => Promise<void>;
   getAllStudents: () => Promise<StudentData[]>;
   updateStudentData: (uid: string, data: Partial<StudentData>) => Promise<void>;
+  deleteStudent: (uid: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -151,6 +152,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await updateDoc(doc(db, 'users', uid), data);
   };
 
+  const deleteStudent = async (uid: string) => {
+    await deleteDoc(doc(db, 'users', uid));
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -163,6 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       updateStudentProgress,
       getAllStudents,
       updateStudentData,
+      deleteStudent,
     }}>
       {children}
     </AuthContext.Provider>

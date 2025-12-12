@@ -14,6 +14,21 @@ interface StudentData {
   gameScores: Record<string, { score: number; date: number }>;
   wrongAnswers?: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted?: number[];
+  screenTime?: number;
+}
+
+interface DailyRecord {
+  date: string;
+  homework: Record<string, boolean>;
+  attendance: Record<string, 'present' | 'absent' | 'late'>;
+}
+
+interface AttendanceStats {
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  homeworkDone: number;
+  homeworkMissed: number;
 }
 
 const TEACHER_NAME = 'Master Salman and Tahura Teacher';
@@ -63,8 +78,27 @@ const addFooter = (doc: jsPDF, pageNum: number, totalPages: number, isLandscape 
   doc.text('📞 Contact: 9408097177', pageWidth / 2, pageHeight - 5, { align: 'center' });
 };
 
+// Helper to get attendance stats for a student
+const getAttendanceStats = (studentId: string): AttendanceStats => {
+  const saved = localStorage.getItem('teacher_daily_records');
+  const records: Record<string, DailyRecord> = saved ? JSON.parse(saved) : {};
+  
+  let presentDays = 0, absentDays = 0, lateDays = 0, homeworkDone = 0, homeworkMissed = 0;
+  
+  Object.values(records).forEach(record => {
+    if (record.attendance[studentId] === 'present') presentDays++;
+    if (record.attendance[studentId] === 'absent') absentDays++;
+    if (record.attendance[studentId] === 'late') lateDays++;
+    if (record.homework[studentId] === true) homeworkDone++;
+    if (record.homework[studentId] === false) homeworkMissed++;
+  });
+  
+  return { presentDays, absentDays, lateDays, homeworkDone, homeworkMissed };
+};
+
 export const generateStudentReport = (student: StudentData) => {
   const doc = new jsPDF();
+  const attendanceStats = getAttendanceStats(student.uid);
   
   addHeader(doc);
   
@@ -127,6 +161,38 @@ export const generateStudentReport = (student: StudentData) => {
   doc.text('📊 Level', 180, statsY + 22, { align: 'center' });
   
   let yPos = 128;
+  
+  // Attendance & Homework Section
+  doc.setFillColor(34, 197, 94);
+  doc.roundedRect(14, yPos, 182, 10, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('📅 ATTENDANCE & HOMEWORK', 105, yPos + 7, { align: 'center' });
+  yPos += 15;
+  
+  const attendanceData = [
+    ['Present Days', attendanceStats.presentDays.toString(), 'Absent Days', attendanceStats.absentDays.toString()],
+    ['Late Days', attendanceStats.lateDays.toString(), 'Screen Time', `${Math.floor((student.screenTime || 0) / 60)}h ${(student.screenTime || 0) % 60}m`],
+    ['Homework Done', attendanceStats.homeworkDone.toString(), 'Homework Missed', attendanceStats.homeworkMissed.toString()],
+  ];
+  
+  autoTable(doc, {
+    startY: yPos,
+    head: [['Metric', 'Count', 'Metric', 'Count']],
+    body: attendanceData,
+    theme: 'grid',
+    headStyles: { 
+      fillColor: [34, 197, 94], 
+      textColor: 255,
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    bodyStyles: { halign: 'center', fontSize: 10 },
+    alternateRowStyles: { fillColor: [240, 253, 244] },
+    margin: { left: 14, right: 14 },
+  });
+  yPos = (doc as any).lastAutoTable.finalY + 10;
   
   // Test Scores Section
   doc.setFillColor(79, 70, 229);
