@@ -11,8 +11,8 @@ import {
   Users, LogOut, Star, Trophy, BookOpen, BarChart3, 
   Search, Filter, ChevronDown, ChevronUp, Award, Download,
   Upload, FileSpreadsheet, AlertCircle, Check, X, Volume2, VolumeX,
-  Eye, Trash2, Edit3, RefreshCw, MessageCircle, GraduationCap,
-  CalendarCheck, PieChart
+  Eye, EyeOff, Trash2, Edit3, RefreshCw, MessageCircle, GraduationCap,
+  CalendarCheck, PieChart, Key
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,7 +30,8 @@ interface StudentData {
   wrongAnswers?: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted?: number[];
   parentPhone?: string;
-  screenTime?: number; // Total screen time in minutes
+  screenTime?: number;
+  defaultPassword?: string; // Stored for teacher reference only
 }
 
 type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management' | 'add-student';
@@ -57,6 +58,7 @@ const TeacherDashboard = () => {
   const [newStudentStandard, setNewStudentStandard] = useState('1st');
   const [newStudentParentPhone, setNewStudentParentPhone] = useState('');
   const [creatingStudent, setCreatingStudent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!userData || userData.role !== 'teacher') {
@@ -406,7 +408,7 @@ const TeacherDashboard = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
                     <div className="text-sm">
                       <p className="text-muted-foreground">Joined</p>
                       <p className="font-medium text-foreground">
@@ -429,6 +431,14 @@ const TeacherDashboard = () => {
                       <p className="text-muted-foreground">Screen Time</p>
                       <p className="font-medium text-foreground">
                         {Math.floor((student.screenTime || 0) / 60)}h {(student.screenTime || 0) % 60}m
+                      </p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-muted-foreground flex items-center gap-1">
+                        <Key className="w-3 h-3" /> Password
+                      </p>
+                      <p className="font-medium text-foreground font-mono bg-muted px-2 py-0.5 rounded text-xs">
+                        {student.defaultPassword || 'Not saved'}
                       </p>
                     </div>
                   </div>
@@ -869,15 +879,25 @@ const TeacherDashboard = () => {
           <label className="block text-sm font-medium text-foreground mb-2">
             Password <span className="text-destructive">*</span>
           </label>
-          <input
-            type="password"
-            value={newStudentPassword}
-            onChange={(e) => setNewStudentPassword(e.target.value)}
-            placeholder="Create a password (min 6 characters)"
-            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
-            minLength={6}
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={newStudentPassword}
+              onChange={(e) => setNewStudentPassword(e.target.value)}
+              placeholder="Create a password (min 6 characters)"
+              className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+              minLength={6}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">This password will be saved for your reference</p>
         </div>
 
         <div>
@@ -897,6 +917,13 @@ const TeacherDashboard = () => {
             <option value="3rd">3rd Standard</option>
             <option value="4th">4th Standard</option>
             <option value="5th">5th Standard</option>
+            <option value="6th">6th Standard</option>
+            <option value="7th">7th Standard</option>
+            <option value="8th">8th Standard</option>
+            <option value="9th">9th Standard</option>
+            <option value="10th">10th Standard</option>
+            <option value="11th">11th Standard</option>
+            <option value="12th">12th Standard</option>
           </select>
         </div>
 
