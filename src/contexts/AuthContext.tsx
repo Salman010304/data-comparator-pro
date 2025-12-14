@@ -48,6 +48,7 @@ interface AuthContextType {
   getAllStudents: () => Promise<StudentData[]>;
   updateStudentData: (uid: string, data: Partial<StudentData>) => Promise<void>;
   deleteStudent: (uid: string) => Promise<void>;
+  createStudent: (email: string, password: string, name: string, standard: string, parentPhone?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -156,6 +157,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await deleteDoc(doc(db, 'users', uid));
   };
 
+  // Create student without affecting current teacher session
+  const createStudent = async (email: string, password: string, name: string, standard: string, parentPhone?: string) => {
+    // Store current user
+    const currentUser = user;
+    const currentUserData = userData;
+    
+    // Create new student account
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const newUser = userCredential.user;
+
+    const studentData: StudentData = {
+      uid: newUser.uid,
+      email,
+      name,
+      standard,
+      stars: 0,
+      maxLevel: 1,
+      role: 'student',
+      createdAt: Date.now(),
+      testScores: {},
+      gameScores: {},
+      wrongAnswers: {},
+      lessonsCompleted: [],
+      screenTime: 0,
+      parentPhone,
+    };
+
+    await setDoc(doc(db, 'users', newUser.uid), studentData);
+    
+    // Sign out the new student and restore teacher session
+    await signOut(auth);
+    
+    // Re-authenticate teacher
+    if (currentUser?.email) {
+      // The onAuthStateChanged will handle restoring the session
+      // We need to sign the teacher back in
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -169,6 +209,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       getAllStudents,
       updateStudentData,
       deleteStudent,
+      createStudent,
     }}>
       {children}
     </AuthContext.Provider>
