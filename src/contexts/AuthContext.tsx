@@ -159,42 +159,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Create student without affecting current teacher session
-  const createStudent = async (email: string, password: string, name: string, standard: string, parentPhone?: string) => {
-    // Store current user
+  const createStudent = async (
+    email: string,
+    password: string,
+    name: string,
+    standard: string,
+    parentPhone?: string
+  ) => {
+    // Store current user (teacher)
     const currentUser = user;
     const currentUserData = userData;
-    
-    // Create new student account
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const newUser = userCredential.user;
 
-    const studentData: StudentData = {
-      uid: newUser.uid,
-      email,
-      name,
-      standard,
-      stars: 0,
-      maxLevel: 1,
-      role: 'student',
-      createdAt: Date.now(),
-      testScores: {},
-      gameScores: {},
-      wrongAnswers: {},
-      lessonsCompleted: [],
-      screenTime: 0,
-      parentPhone,
-      defaultPassword: password, // Store for teacher reference
-    };
+    // Create or attach to existing student auth account
+    let newUser: User;
 
-    await setDoc(doc(db, 'users', newUser.uid), studentData);
-    
-    // Sign out the new student and restore teacher session
-    await signOut(auth);
-    
-    // Re-authenticate teacher
-    if (currentUser?.email) {
-      // The onAuthStateChanged will handle restoring the session
-      // We need to sign the teacher back in
+    try {
+      try {
+        // Try to create a brand new auth user
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        newUser = userCredential.user;
+      } catch (error: any) {
+        // If the email already exists, sign in with the same credentials
+        if (error?.code === 'auth/email-already-in-use') {
+          const existingCredential = await signInWithEmailAndPassword(auth, email, password);
+          newUser = existingCredential.user;
+        } else {
+          throw error;
+        }
+      }
+
+      const studentData: StudentData = {
+        uid: newUser.uid,
+        email,
+        name,
+        standard,
+        stars: 0,
+        maxLevel: 1,
+        role: 'student',
+        createdAt: Date.now(),
+        testScores: {},
+        gameScores: {},
+        wrongAnswers: {},
+        lessonsCompleted: [],
+        screenTime: 0,
+        defaultPassword: password, // Store for teacher reference
+      };
+
+      // Only set parentPhone if it was provided to avoid undefined errors in Firestore
+      if (parentPhone) {
+        studentData.parentPhone = parentPhone;
+      }
+
+      // Merge in case a student document already exists partially
+      await setDoc(doc(db, 'users', newUser.uid), studentData, { merge: true });
+
+      // Sign out the student so teacher can continue working
+      await signOut(auth);
+
+      // onAuthStateChanged will handle restoring the session when teacher logs back in
+      if (currentUser?.email) {
+        // Intentionally left without auto-login for security; teacher can sign back in
+      }
+    } catch (error) {
+      // Rethrow so UI (TeacherDashboard) can show a proper error message
+      throw error;
     }
   };
 
