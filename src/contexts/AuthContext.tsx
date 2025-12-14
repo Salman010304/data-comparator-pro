@@ -22,8 +22,9 @@ interface StudentData {
   gameScores: Record<string, { score: number; date: number }>;
   wrongAnswers: Record<number, { question: string; wrongAnswer: string; correctAnswer: string; date: number }[]>;
   lessonsCompleted: number[];
-  screenTime: number; // Total screen time in minutes
+  screenTime: number;
   parentPhone?: string;
+  defaultPassword?: string; // Stored for teacher reference only
 }
 
 interface TeacherData {
@@ -182,6 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       lessonsCompleted: [],
       screenTime: 0,
       parentPhone,
+      defaultPassword: password, // Store for teacher reference
     };
 
     await setDoc(doc(db, 'users', newUser.uid), studentData);
