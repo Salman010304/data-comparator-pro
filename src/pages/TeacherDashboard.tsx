@@ -36,7 +36,7 @@ interface StudentData {
 type TabType = 'students' | 'homework' | 'reports' | 'charts' | 'mistakes' | 'data-management' | 'add-student';
 
 const TeacherDashboard = () => {
-  const { userData, logout, getAllStudents, updateStudentData, deleteStudent, signUp } = useAuth();
+  const { userData, logout, getAllStudents, updateStudentData, deleteStudent, createStudent } = useAuth();
   const navigate = useNavigate();
   const [students, setStudents] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,6 +210,46 @@ const TeacherDashboard = () => {
     } catch (error) {
       toast.error('Failed to update level');
       soundManager.playError();
+    }
+  };
+
+  // Create new student account
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStudentName || !newStudentEmail || !newStudentPassword) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    
+    setCreatingStudent(true);
+    try {
+      await createStudent(
+        newStudentEmail,
+        newStudentPassword,
+        newStudentName,
+        newStudentStandard,
+        newStudentParentPhone || undefined
+      );
+      
+      // Clear form
+      setNewStudentName('');
+      setNewStudentEmail('');
+      setNewStudentPassword('');
+      setNewStudentStandard('1st');
+      setNewStudentParentPhone('');
+      
+      // Reload students list
+      await loadStudents();
+      
+      soundManager.playSuccess();
+      toast.success(`Student "${newStudentName}" created successfully!`);
+      setActiveTab('students');
+    } catch (error: any) {
+      console.error('Failed to create student:', error);
+      toast.error(error.message || 'Failed to create student');
+      soundManager.playError();
+    } finally {
+      setCreatingStudent(false);
     }
   };
 
@@ -786,6 +826,115 @@ const TeacherDashboard = () => {
     </div>
   );
 
+  const renderAddStudentTab = () => (
+    <div className="bg-card rounded-2xl shadow-card p-6 max-w-2xl mx-auto">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-primary flex items-center justify-center">
+          <GraduationCap className="w-8 h-8 text-primary-foreground" />
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Create New Student Account</h2>
+        <p className="text-muted-foreground">Add a new student to Nurani Tuition Classes</p>
+      </div>
+
+      <form onSubmit={handleCreateStudent} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Student Name <span className="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            value={newStudentName}
+            onChange={(e) => setNewStudentName(e.target.value)}
+            placeholder="Enter student's full name"
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Email Address <span className="text-destructive">*</span>
+          </label>
+          <input
+            type="email"
+            value={newStudentEmail}
+            onChange={(e) => setNewStudentEmail(e.target.value)}
+            placeholder="student@example.com"
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Password <span className="text-destructive">*</span>
+          </label>
+          <input
+            type="password"
+            value={newStudentPassword}
+            onChange={(e) => setNewStudentPassword(e.target.value)}
+            placeholder="Create a password (min 6 characters)"
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+            minLength={6}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Standard/Class <span className="text-destructive">*</span>
+          </label>
+          <select
+            value={newStudentStandard}
+            onChange={(e) => setNewStudentStandard(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+          >
+            <option value="Nursery">Nursery</option>
+            <option value="LKG">LKG</option>
+            <option value="UKG">UKG</option>
+            <option value="1st">1st Standard</option>
+            <option value="2nd">2nd Standard</option>
+            <option value="3rd">3rd Standard</option>
+            <option value="4th">4th Standard</option>
+            <option value="5th">5th Standard</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Parent's Phone (Optional)
+          </label>
+          <input
+            type="tel"
+            value={newStudentParentPhone}
+            onChange={(e) => setNewStudentParentPhone(e.target.value)}
+            placeholder="e.g., 919876543210"
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary transition-colors"
+          />
+          <p className="text-xs text-muted-foreground mt-1">Include country code for WhatsApp</p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={creatingStudent}
+          className="w-full py-4 gradient-primary text-primary-foreground rounded-xl font-bold text-lg shadow-button btn-bounce disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {creatingStudent ? (
+            <span className="flex items-center justify-center gap-2">
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              Creating Student...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <Check className="w-5 h-5" />
+              Create Student Account
+            </span>
+          )}
+        </button>
+      </form>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -861,6 +1010,7 @@ const TeacherDashboard = () => {
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
           {[
             { id: 'students', label: 'Students', icon: Users },
+            { id: 'add-student', label: 'Add Student', icon: GraduationCap },
             { id: 'homework', label: 'Homework & Attendance', icon: CalendarCheck },
             { id: 'charts', label: 'Charts', icon: PieChart },
             { id: 'reports', label: 'Reports', icon: Download },
@@ -888,6 +1038,7 @@ const TeacherDashboard = () => {
 
         {/* Tab Content */}
         {activeTab === 'students' && renderStudentsTab()}
+        {activeTab === 'add-student' && renderAddStudentTab()}
         {activeTab === 'homework' && renderHomeworkTab()}
         {activeTab === 'charts' && renderChartsTab()}
         {activeTab === 'reports' && renderReportsTab()}
