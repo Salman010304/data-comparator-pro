@@ -3,6 +3,7 @@ import { BARAKHADI_ROOTS, BARAKHADI_MATRAS } from '@/data/phonicsData';
 import { speak } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Volume2 } from 'lucide-react';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level2BarakhadiProps {
   langMode: 'gujarati' | 'hindi';
@@ -11,6 +12,7 @@ interface Level2BarakhadiProps {
 export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
   const [activeRoot, setActiveRoot] = useState<typeof BARAKHADI_ROOTS[0] | null>(null);
   const [activeCell, setActiveCell] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const handleRootClick = (root: typeof BARAKHADI_ROOTS[0]) => {
     setActiveRoot(root);
@@ -28,6 +30,51 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
     speak(combined);
     setTimeout(() => setActiveCell(null), 500);
   };
+
+  const lessonSteps = [
+    {
+      title: "What is Barakhadi? 📝",
+      content: "Barakhadi is a special way to learn how consonants combine with vowels to make new sounds. It's like magic mixing!",
+      emoji: "✨"
+    },
+    {
+      title: "Consonants + Vowels = New Sounds! 🔀",
+      content: "When we add a vowel sound (matra) to a consonant, we get a new sound. Like K + A = KA, K + I = KI!",
+      example: "K + A = KA",
+      emoji: "➕"
+    },
+    {
+      title: "The Matras (Vowel Signs) 🎵",
+      content: "Matras are the vowel marks that change how a consonant sounds. Each matra has its own shape and sound!",
+      example: "ा ि ी ु ू",
+      emoji: "🎶"
+    },
+    {
+      title: "Building Words 🏗️",
+      content: "Once you know Barakhadi, you can read any word! It's like knowing the secret code to unlock reading.",
+      emoji: "🔓"
+    },
+    {
+      title: "Let's Practice! 🎮",
+      content: "First, tap a consonant to select it. Then tap different matras to hear how the sound changes!",
+      emoji: "👆"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={2}
+        levelTitle="Barakhadi"
+        levelEmoji="📝"
+        description="Learn how consonants combine with vowel sounds"
+        objective="Master letter combinations to read any word"
+        steps={lessonSteps}
+        funFact="Barakhadi has been used for thousands of years to teach reading in Indian languages!"
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">
@@ -53,11 +100,9 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
                   'flex flex-col items-center justify-center h-24'
                 )}
               >
-                {/* English letter big on top */}
                 <span className="text-2xl font-black text-primary">
                   {root.english}
                 </span>
-                {/* Gujarati/Hindi letter small below */}
                 <span className="text-sm text-foreground mt-1">
                   {langMode === 'gujarati' ? root.gujarati : root.hindi}
                 </span>
@@ -100,11 +145,9 @@ export const Level2Barakhadi = ({ langMode }: Level2BarakhadiProps) => {
                       activeCell === matra.suffix && 'scale-105 border-primary shadow-glow'
                     )}
                   >
-                    {/* English spelling big */}
                     <span className="text-2xl font-black text-primary">
                       {activeRoot.english}{matra.english}
                     </span>
-                    {/* Combined letter small */}
                     <span className="text-lg font-medium text-foreground mt-2">
                       {combined}
                     </span>

@@ -4,6 +4,7 @@ import { speak, speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Volume2 } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level3BlendingProps {
   langMode: 'gujarati' | 'hindi';
@@ -13,6 +14,7 @@ interface Level3BlendingProps {
 export const Level3Blending = ({ langMode, onAddStar }: Level3BlendingProps) => {
   const [activeVowel, setActiveVowel] = useState<string | null>(null);
   const [activeWord, setActiveWord] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const vowels = Object.keys(TWO_LETTER_BLENDING) as (keyof typeof TWO_LETTER_BLENDING)[];
 
@@ -34,6 +36,51 @@ export const Level3Blending = ({ langMode, onAddStar }: Level3BlendingProps) => 
     O: 'from-orange-400/30 to-orange-400/10 border-orange-400/30',
     U: 'from-purple-400/30 to-purple-400/10 border-purple-400/30',
   };
+
+  const lessonSteps = [
+    {
+      title: "What is Blending? 🔗",
+      content: "Blending is when we connect two letters together to make one smooth sound. It's like mixing two colors to make a new color!",
+      emoji: "🎨"
+    },
+    {
+      title: "2-Letter Sounds 🔤",
+      content: "When two letters come together, they create short words or sound chunks. Like 'AT', 'IN', 'UP' - these are building blocks!",
+      example: "A + T = AT",
+      emoji: "🧩"
+    },
+    {
+      title: "Vowel Power! ⭐",
+      content: "Each vowel (A, E, I, O, U) can blend with different consonants. 'A' can make AT, AN, AM - all with different endings!",
+      example: "AT AN AM",
+      emoji: "💪"
+    },
+    {
+      title: "Sound It Out 🗣️",
+      content: "To read a blended word, say each letter's sound quickly together. 'AT' = 'aaa' + 'tuh' = 'AT'!",
+      emoji: "🔊"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Pick a vowel, then tap the blended words to hear them. Try saying them yourself with the microphone!",
+      emoji: "🎤"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={3}
+        levelTitle="2-Letter Blending"
+        levelEmoji="🔗"
+        description="Learn to blend vowels with consonants"
+        objective="Master blending two letters into smooth sounds"
+        steps={lessonSteps}
+        funFact="Blending skills help you read faster! Good readers can blend sounds in their head automatically."
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">

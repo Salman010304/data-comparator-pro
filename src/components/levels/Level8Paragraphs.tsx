@@ -4,6 +4,7 @@ import { speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2, BookOpen } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level8ParagraphsProps {
   langMode: 'gujarati' | 'hindi';
@@ -12,6 +13,50 @@ interface Level8ParagraphsProps {
 
 export const Level8Paragraphs = ({ langMode, onAddStar }: Level8ParagraphsProps) => {
   const [activeParagraph, setActiveParagraph] = useState<number | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
+
+  const lessonSteps = [
+    {
+      title: "What is a Paragraph? 📄",
+      content: "A paragraph is a group of sentences about one topic! Like this lesson - all these sentences are about paragraphs.",
+      emoji: "📑"
+    },
+    {
+      title: "Stories and Information 📖",
+      content: "Paragraphs tell stories or share information. They have a beginning, middle, and end - just like a mini-adventure!",
+      emoji: "🎭"
+    },
+    {
+      title: "Reading Fluently 🏃",
+      content: "Good readers don't stop at every word. They read smoothly, like talking! Practice reading groups of words together.",
+      emoji: "💨"
+    },
+    {
+      title: "Understanding What You Read 🧠",
+      content: "It's not just about reading words - it's about understanding them! After reading, ask yourself: What was this about?",
+      emoji: "💡"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Read short stories and paragraphs. Listen first, then try reading along. You can also read sentence by sentence!",
+      emoji: "🌟"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={8}
+        levelTitle="Reading Paragraphs"
+        levelEmoji="📄"
+        description="Read and understand short stories and paragraphs"
+        objective="Read paragraphs fluently with comprehension"
+        steps={lessonSteps}
+        funFact="Reading for just 20 minutes a day exposes you to about 1.8 million words per year!"
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">

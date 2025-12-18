@@ -4,6 +4,7 @@ import { speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2, Star, Eye } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level5SightWordsProps {
   langMode: 'gujarati' | 'hindi';
@@ -13,6 +14,7 @@ interface Level5SightWordsProps {
 export const Level5SightWords = ({ langMode, onAddStar }: Level5SightWordsProps) => {
   const [activeWord, setActiveWord] = useState<string | null>(null);
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
+  const [showLesson, setShowLesson] = useState(false);
 
   const handleWordClick = (word: string) => {
     setActiveWord(word);
@@ -25,6 +27,52 @@ export const Level5SightWords = ({ langMode, onAddStar }: Level5SightWordsProps)
     2: { words: SIGHT_WORDS.level2, title: 'Common Words', color: 'bg-orange-100 text-orange-700 border-orange-200' },
     3: { words: SIGHT_WORDS.level3, title: 'WH-Family', color: 'bg-red-100 text-red-700 border-red-200' },
   };
+
+  const lessonSteps = [
+    {
+      title: "What are Sight Words? 👁️",
+      content: "Sight words are common words that appear everywhere! Words like 'the', 'is', 'and' appear in almost every sentence you read.",
+      example: "the is and",
+      emoji: "📚"
+    },
+    {
+      title: "Why Learn Them? 🤔",
+      content: "Some words don't follow normal spelling rules, so we need to recognize them by sight. Like 'the' - you can't sound it out easily!",
+      example: "the one was",
+      emoji: "🧠"
+    },
+    {
+      title: "High Frequency Words 📊",
+      content: "Just 100 sight words make up about 50% of all written text! Learning these words makes reading much faster and easier.",
+      emoji: "🚀"
+    },
+    {
+      title: "The WH-Family ❓",
+      content: "Special question words all start with 'WH': What, Where, When, Why, Who, Which. These help us ask questions!",
+      example: "What? Where?",
+      emoji: "🔍"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Tap words to hear them, then try to say them yourself! The more you practice, the faster you'll recognize them.",
+      emoji: "⚡"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={5}
+        levelTitle="Sight Words"
+        levelEmoji="👁️"
+        description="Learn high-frequency words you'll see everywhere"
+        objective="Instantly recognize common words without sounding them out"
+        steps={lessonSteps}
+        funFact="The word 'the' is the most common word in English! It appears billions of times in books and websites."
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">

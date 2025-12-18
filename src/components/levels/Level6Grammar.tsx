@@ -4,6 +4,7 @@ import { speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2 } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level6GrammarProps {
   langMode: 'gujarati' | 'hindi';
@@ -50,6 +51,7 @@ const WordCard = ({ item, color, langMode, activeWord, onClick, onAddStar }: Wor
 
 export const Level6Grammar = ({ langMode, onAddStar }: Level6GrammarProps) => {
   const [activeWord, setActiveWord] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const handleWordClick = (word: string) => {
     setActiveWord(word);
@@ -57,10 +59,55 @@ export const Level6Grammar = ({ langMode, onAddStar }: Level6GrammarProps) => {
     setTimeout(() => setActiveWord(null), 500);
   };
 
-  // Group by type
   const pronouns = GRAMMAR_WORDS.filter(w => ['I', 'You', 'He', 'She', 'It', 'We', 'They'].includes(w.word));
   const verbs = GRAMMAR_WORDS.filter(w => ['Is', 'Am', 'Are', 'Was', 'Were', 'Have', 'Has'].includes(w.word));
   const demonstratives = GRAMMAR_WORDS.filter(w => ['This', 'That'].includes(w.word));
+
+  const lessonSteps = [
+    {
+      title: "What is Grammar? 📚",
+      content: "Grammar is like the rules of a game! It tells us how to put words together correctly to make sentences that make sense.",
+      emoji: "📏"
+    },
+    {
+      title: "Pronouns - People Words 👤",
+      content: "Pronouns replace names! Instead of saying 'Ram is happy', we can say 'He is happy'. I, You, He, She, It, We, They are pronouns!",
+      example: "I You He She",
+      emoji: "👥"
+    },
+    {
+      title: "Helping Verbs 🔄",
+      content: "Verbs like Is, Am, Are, Was, Were help us describe things. 'I am happy', 'She is tall', 'They are playing'!",
+      example: "Is Am Are",
+      emoji: "💪"
+    },
+    {
+      title: "This and That 👉",
+      content: "'This' is for things close to you. 'That' is for things far away. 'This is my book' vs 'That is your book'!",
+      example: "This That",
+      emoji: "🎯"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Learn these grammar words well - you'll use them in every sentence you speak and write! Tap to hear and practice.",
+      emoji: "✨"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={6}
+        levelTitle="Grammar Words"
+        levelEmoji="📚"
+        description="Learn essential grammar words for building sentences"
+        objective="Master pronouns, verbs, and demonstratives"
+        steps={lessonSteps}
+        funFact="The pronoun 'I' is always written with a capital letter - it's the only pronoun that follows this rule!"
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">
@@ -116,7 +163,7 @@ export const Level6Grammar = ({ langMode, onAddStar }: Level6GrammarProps) => {
         {/* Demonstratives */}
         <div>
           <h3 className="text-sm font-bold mb-3 flex items-center gap-2 px-3 py-1 rounded-full inline-block bg-success/20 text-success">
-            👉 Demonstratives (નિર્દેશક / निર्देशक)
+            👉 Demonstratives (નિર્દેશક / निर्देशक)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {demonstratives.map((item, i) => (

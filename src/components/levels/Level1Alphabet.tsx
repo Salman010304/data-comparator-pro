@@ -3,6 +3,7 @@ import { ALPHABET_DATA } from '@/data/phonicsData';
 import { speak, speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2 } from 'lucide-react';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level1AlphabetProps {
   langMode: 'gujarati' | 'hindi';
@@ -46,6 +47,7 @@ const LetterCard = ({ item, langMode, activeCard, onClick }: LetterCardProps) =>
 
 export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const vowels = ALPHABET_DATA.filter(a => a.isVowel);
   const consonants = ALPHABET_DATA.filter(a => !a.isVowel);
@@ -55,8 +57,6 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
     const item = ALPHABET_DATA.find(a => a.letter === letter);
     const translation = langMode === 'gujarati' ? item?.gujarati : item?.hindi;
     
-    // Speak the English letter first, then the translation
-    // Example: "A" then "અ"
     speakEnglish(letter);
     setTimeout(() => {
       speak(translation || sound);
@@ -64,6 +64,52 @@ export const Level1Alphabet = ({ langMode }: Level1AlphabetProps) => {
     
     setTimeout(() => setActiveCard(null), 1200);
   };
+
+  const lessonSteps = [
+    {
+      title: "What are Letters? 🔤",
+      content: "Letters are the building blocks of words! Just like bricks build a house, letters build words. There are 26 letters in English.",
+      emoji: "🧱"
+    },
+    {
+      title: "Vowels - The Magic Letters ✨",
+      content: "There are 5 special letters called VOWELS: A, E, I, O, U. Every word needs at least one vowel to make a sound!",
+      example: "A E I O U",
+      emoji: "⭐"
+    },
+    {
+      title: "Consonants - The Helper Letters 🤝",
+      content: "The other 21 letters are called CONSONANTS. They team up with vowels to make words like CAT, DOG, and SUN!",
+      example: "B C D F G",
+      emoji: "🔠"
+    },
+    {
+      title: "Letter Sounds 🔊",
+      content: "Each letter makes a special sound. 'A' says 'aaa' like in Apple, 'B' says 'buh' like in Ball. Tap any letter to hear its sound!",
+      example: "A = Apple 🍎",
+      emoji: "🗣️"
+    },
+    {
+      title: "Let's Practice! 🎮",
+      content: "Now tap on any letter card to hear how it sounds in English and your language. The colorful cards are vowels!",
+      emoji: "👆"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={1}
+        levelTitle="Alphabet Sounds"
+        levelEmoji="🔤"
+        description="Learn the 26 English letters and their sounds"
+        objective="Recognize all 26 letters and pronounce them correctly"
+        steps={lessonSteps}
+        funFact="The letter 'E' is the most common letter in English! It appears in about 11% of all words."
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">

@@ -4,24 +4,22 @@ import { speakEnglish, speak } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Volume2 } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level4CVCWordsProps {
   langMode: 'gujarati' | 'hindi';
   onAddStar: () => void;
 }
 
-// Helper to get phonetic breakdown
 const getWordBreakdown = (word: string, family: string, langMode: 'gujarati' | 'hindi') => {
   const consonant = word.charAt(0).toUpperCase();
   const familyUpper = family.toUpperCase();
   
-  // Find the letter in alphabet data
   const letterData = ALPHABET_DATA.find(a => a.letter === consonant);
   const consonantLocal = letterData 
     ? (langMode === 'gujarati' ? letterData.gujarati : letterData.hindi)
     : consonant;
   
-  // Get family translation
   const familyData = CVC_WORD_FAMILIES[family as keyof typeof CVC_WORD_FAMILIES];
   const familyLocal = familyData 
     ? (langMode === 'gujarati' ? familyData.gujarati : familyData.hindi)
@@ -36,10 +34,10 @@ const getWordBreakdown = (word: string, family: string, langMode: 'gujarati' | '
 export const Level4CVCWords = ({ langMode, onAddStar }: Level4CVCWordsProps) => {
   const [activeFamily, setActiveFamily] = useState<string | null>(null);
   const [activeWord, setActiveWord] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const families = Object.keys(CVC_WORD_FAMILIES);
 
-  // Group families by vowel
   const familyGroups = {
     A: families.filter(f => ['at', 'an', 'ag', 'am', 'ap', 'ad'].includes(f)),
     E: families.filter(f => ['en', 'et', 'ed', 'em'].includes(f)),
@@ -73,6 +71,52 @@ export const Level4CVCWords = ({ langMode, onAddStar }: Level4CVCWordsProps) => 
     }
     return 'A';
   };
+
+  const lessonSteps = [
+    {
+      title: "What are CVC Words? 📖",
+      content: "CVC stands for Consonant-Vowel-Consonant. These are simple 3-letter words like CAT, DOG, SUN that follow this pattern!",
+      example: "C-A-T",
+      emoji: "🐱"
+    },
+    {
+      title: "Word Families 👨‍👩‍👧‍👦",
+      content: "Words that end the same are in the same family! CAT, BAT, HAT all belong to the '-AT' family. Learning families helps you read faster!",
+      example: "CAT BAT HAT",
+      emoji: "🏠"
+    },
+    {
+      title: "Breaking Words Apart 🔨",
+      content: "To read a CVC word, break it into parts: C + AT = CAT. The first letter changes, but the ending stays the same!",
+      example: "B + AT = BAT",
+      emoji: "🧩"
+    },
+    {
+      title: "Sound It Out 🔊",
+      content: "Say each sound slowly, then blend them together faster. 'cuh' + 'aaa' + 'tuh' = 'CAT'!",
+      emoji: "🗣️"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Pick a word family, then tap words to hear them. Use the microphone to practice saying them yourself!",
+      emoji: "🎤"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={4}
+        levelTitle="CVC Word Families"
+        levelEmoji="📖"
+        description="Master 3-letter words grouped by ending sounds"
+        objective="Read CVC words fluently using word family patterns"
+        steps={lessonSteps}
+        funFact="There are over 500 CVC words in English! Once you know the patterns, you can read them all."
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">
@@ -165,19 +209,16 @@ export const Level4CVCWords = ({ langMode, onAddStar }: Level4CVCWordsProps) => 
                       activeWord === word && 'scale-105 border-primary shadow-glow'
                     )}
                   >
-                    {/* Word */}
                     <span className="text-3xl font-bold text-foreground capitalize mb-3">
                       {word}
                     </span>
                     
-                    {/* English Breakdown */}
                     <div className="bg-primary/10 px-4 py-2 rounded-xl mb-2">
                       <span className="text-lg font-bold text-primary">
                         {breakdown.englishBreakdown}
                       </span>
                     </div>
                     
-                    {/* Local Language Breakdown */}
                     <div className="bg-secondary/10 px-4 py-2 rounded-xl mb-3">
                       <span className="text-base font-medium text-secondary-foreground">
                         {breakdown.localBreakdown}
