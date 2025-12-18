@@ -4,6 +4,7 @@ import { speakEnglish } from '@/utils/speech';
 import { cn } from '@/lib/utils';
 import { Volume2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { MicButton } from '../MicButton';
+import { LessonIntro } from '../LessonIntro';
 
 interface Level7SentencesProps {
   langMode: 'gujarati' | 'hindi';
@@ -13,6 +14,7 @@ interface Level7SentencesProps {
 export const Level7Sentences = ({ langMode, onAddStar }: Level7SentencesProps) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSentence, setActiveSentence] = useState<string | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
 
   const categories = [
     { key: 'theCVC', title: 'The + CVC Word + is', icon: '🔵', color: 'bg-blue-100 border-blue-200 text-blue-700' },
@@ -29,6 +31,53 @@ export const Level7Sentences = ({ langMode, onAddStar }: Level7SentencesProps) =
     speakEnglish(sentence);
     setTimeout(() => setActiveSentence(null), 1000);
   };
+
+  const lessonSteps = [
+    {
+      title: "What is a Sentence? ✍️",
+      content: "A sentence is a complete thought made of words! It starts with a capital letter and ends with a period (.) or question mark (?).",
+      example: "I am happy.",
+      emoji: "📝"
+    },
+    {
+      title: "Building Blocks 🧱",
+      content: "Sentences are built with the words you learned! Combine pronouns + verbs + other words. Like 'I + am + happy'!",
+      example: "I am happy.",
+      emoji: "🏗️"
+    },
+    {
+      title: "The + Word + Is 🔵",
+      content: "A common pattern! 'The cat is big.' 'The sun is hot.' Start with 'The', add a word, then 'is' and describe!",
+      example: "The cat is big.",
+      emoji: "🐱"
+    },
+    {
+      title: "Question Sentences ❓",
+      content: "Questions ask for information! They often start with WH-words: What is this? Where is it? Why is it hot?",
+      example: "What is this?",
+      emoji: "🤔"
+    },
+    {
+      title: "Practice Time! 🎮",
+      content: "Pick a sentence type to practice. Listen carefully, then try reading them yourself! Good readers read smoothly.",
+      emoji: "📖"
+    }
+  ];
+
+  if (!showLesson) {
+    return (
+      <LessonIntro
+        levelNumber={7}
+        levelTitle="Reading Sentences"
+        levelEmoji="✍️"
+        description="Put words together to read complete sentences"
+        objective="Read simple sentences fluently with proper expression"
+        steps={lessonSteps}
+        funFact="The average person reads about 200-300 words per minute. With practice, you can read even faster!"
+        onStartLesson={() => setShowLesson(true)}
+      />
+    );
+  }
 
   return (
     <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col">
