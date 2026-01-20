@@ -7,6 +7,8 @@ import { soundManager } from '@/utils/sounds';
 interface LessonStep {
   title: string;
   content: string;
+  contentGujarati?: string;
+  contentHindi?: string;
   example?: string;
   emoji?: string;
 }
@@ -16,9 +18,16 @@ interface LessonIntroProps {
   levelTitle: string;
   levelEmoji: string;
   description: string;
+  descriptionGujarati?: string;
+  descriptionHindi?: string;
   objective: string;
+  objectiveGujarati?: string;
+  objectiveHindi?: string;
   steps: LessonStep[];
   funFact?: string;
+  funFactGujarati?: string;
+  funFactHindi?: string;
+  langMode: 'gujarati' | 'hindi';
   onStartLesson: () => void;
 }
 
@@ -27,9 +36,16 @@ export const LessonIntro = ({
   levelTitle,
   levelEmoji,
   description,
+  descriptionGujarati,
+  descriptionHindi,
   objective,
+  objectiveGujarati,
+  objectiveHindi,
   steps,
   funFact,
+  funFactGujarati,
+  funFactHindi,
+  langMode,
   onStartLesson,
 }: LessonIntroProps) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -54,6 +70,23 @@ export const LessonIntro = ({
     speakEnglish(text);
   };
 
+  // Get localized content based on language mode
+  const getLocalizedDescription = () => {
+    return langMode === 'gujarati' ? descriptionGujarati : descriptionHindi;
+  };
+
+  const getLocalizedObjective = () => {
+    return langMode === 'gujarati' ? objectiveGujarati : objectiveHindi;
+  };
+
+  const getLocalizedFunFact = () => {
+    return langMode === 'gujarati' ? funFactGujarati : funFactHindi;
+  };
+
+  const getLocalizedContent = (step: LessonStep) => {
+    return langMode === 'gujarati' ? step.contentGujarati : step.contentHindi;
+  };
+
   if (!showSteps) {
     return (
       <div className="bg-card rounded-3xl shadow-card p-6 h-full flex flex-col animate-fade-in">
@@ -66,6 +99,11 @@ export const LessonIntro = ({
             Level {levelNumber}: {levelTitle}
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">{description}</p>
+          {getLocalizedDescription() && (
+            <p className="text-sm text-primary mt-2 max-w-md mx-auto font-medium">
+              {getLocalizedDescription()}
+            </p>
+          )}
         </div>
 
         {/* Objective Card */}
@@ -77,6 +115,9 @@ export const LessonIntro = ({
             <div>
               <h3 className="font-bold text-foreground mb-1">🎯 Learning Objective</h3>
               <p className="text-muted-foreground">{objective}</p>
+              {getLocalizedObjective() && (
+                <p className="text-sm text-primary mt-1 font-medium">{getLocalizedObjective()}</p>
+              )}
             </div>
           </div>
         </div>
@@ -107,9 +148,12 @@ export const LessonIntro = ({
           <div className="bg-gradient-to-r from-secondary/20 to-secondary/10 rounded-xl p-4 mb-6 border border-secondary/30">
             <div className="flex items-start gap-3">
               <Lightbulb className="w-5 h-5 text-secondary-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-secondary-foreground">
-                <span className="font-bold">Fun Fact:</span> {funFact}
-              </p>
+              <div className="text-sm text-secondary-foreground">
+                <p><span className="font-bold">Fun Fact:</span> {funFact}</p>
+                {getLocalizedFunFact() && (
+                  <p className="mt-1 text-primary font-medium">{getLocalizedFunFact()}</p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -156,9 +200,15 @@ export const LessonIntro = ({
         
         <h2 className="text-2xl font-bold text-foreground mb-4">{step.title}</h2>
         
-        <p className="text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed">
+        <p className="text-lg text-muted-foreground mb-2 max-w-lg leading-relaxed">
           {step.content}
         </p>
+        
+        {getLocalizedContent(step) && (
+          <p className="text-base text-primary mb-6 max-w-lg leading-relaxed font-medium bg-primary/10 px-4 py-2 rounded-xl">
+            {getLocalizedContent(step)}
+          </p>
+        )}
 
         {step.example && (
           <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-6 mb-6 border-2 border-primary/20">
